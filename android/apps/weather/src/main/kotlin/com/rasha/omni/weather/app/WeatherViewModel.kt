@@ -28,15 +28,19 @@ import java.util.Locale
  * main thread; the screen only ever receives a finished [WeatherUi]. A failed refresh keeps the last good data and says so. Refreshes are
  * debounced (once a minute at most, the repository also serves anything under 30 minutes old from disk) and there is no polling.
  */
-class WeatherViewModel(app: Application) : AndroidViewModel(app) {
+class WeatherViewModel(app: Application, startPlace: String? = null) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("weather", Context.MODE_PRIVATE)
     private val repo = WeatherRepository(HttpJson(File(app.cacheDir, "wx"), "OMNI-Weather/1.0 (Android TV)"))
     private val _state = MutableStateFlow<UiState<WeatherUi>>(UiState.Loading)
     val state: StateFlow<UiState<WeatherUi>> = _state.asStateFlow()
-    private val _place = MutableStateFlow(Places.firstOrNull { it.name == prefs.getString("place", "Civate") } ?: Places.first())
+    /** The launcher passes the place it shows on Home (one place for everything); opened on its own, the last choice here is used. */
+    private val _place = MutableStateFlow(Places.firstOrNull { it.name == (startPlace ?: prefs.getString("place", "Civate")) } ?: Places.first())
     val place: StateFlow<Place> = _place.asStateFlow()
     private var job: Job? = null
     private var lastAttempt = 0L
+
+    /** Tells the screen's host (the activity returns it to OMNI, which keeps the one stored place). */
+    var onPicked: ((String) -> Unit)? = null
 
     init { start() }
 
@@ -68,6 +72,7 @@ class WeatherViewModel(app: Application) : AndroidViewModel(app) {
         if (p == _place.value) return
         prefs.edit().putString("place", p.name).apply()
         _place.value = p
+        onPicked?.invoke(p.name)
         lastAttempt = System.currentTimeMillis()
         start()
     }

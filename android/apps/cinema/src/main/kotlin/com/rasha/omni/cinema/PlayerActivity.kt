@@ -30,7 +30,7 @@ import kotlinx.coroutines.withContext
 
 /** Full-screen player. Position is saved every 10 s and on leaving, so "Resume" is right even after a crash; the end of a film marks it watched. */
 class PlayerActivity : ComponentActivity() {
-    private val lib by lazy { (application as CinemaApp).lib }
+    private val lib by lazy { CinemaLib.get(this) }
     private var player: ExoPlayer? = null
     private lateinit var view: PlayerView
     private lateinit var note: TextView

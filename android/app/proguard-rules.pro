@@ -1,0 +1,2 @@
+-dontwarn java.lang.invoke.StringConcatFactory
+-keep class com.rasha.omni.** { *; }

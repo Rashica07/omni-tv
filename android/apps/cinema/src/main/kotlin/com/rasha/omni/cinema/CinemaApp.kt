@@ -1,9 +1,10 @@
 package com.rasha.omni.cinema
 
-import android.app.Application
+import android.content.Context
 import com.rasha.omni.library.Library
 
-class CinemaApp : Application() {
-    /** One library for the whole process: the database, the image cache and the scan state are shared by the screens and the player. */
-    val lib by lazy { Library(this, BuildConfig.TMDB) }
+/** One library for the whole Cinema process: the database, the image cache and the scan state are shared by the screens, the player and the catalogue provider. */
+object CinemaLib {
+    @Volatile private var lib: Library? = null
+    fun get(ctx: Context): Library = lib ?: synchronized(this) { lib ?: Library(ctx.applicationContext, BuildConfig.TMDB).also { lib = it } }
 }

@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "omni-os"
-include(":core:design", ":core:common", ":core:network", ":core:weather", ":apps:reference", ":apps:weather", ":apps:control", ":apps:guide", ":apps:play", ":apps:gallery", ":core:library", ":apps:cinema", ":apps:server")
+include(":app", ":core:design", ":core:common", ":core:network", ":core:weather", ":core:library", ":apps:cinema", ":apps:weather", ":apps:server", ":apps:gallery")

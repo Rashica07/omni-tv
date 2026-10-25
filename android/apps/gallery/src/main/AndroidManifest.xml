@@ -1,29 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-feature android:name="android.software.leanback" android:required="false" />
-    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <application
-        android:label="OMNI Gallery"
-        android:icon="@mipmap/ic_launcher"
-        android:banner="@drawable/banner"
-        android:allowBackup="false"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.OmniApp">
-        <activity android:name=".GalleryActivity" android:exported="true"
-            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|uiMode">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".SlideshowActivity" android:exported="false" android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+    <application>
+        <!-- the screensaver's settings and a full-screen preview: opened from OMNI's Settings, no icon of their own -->
+        <activity android:name=".GalleryActivity" android:exported="false" android:process=":gallery" android:theme="@style/Theme.OmniApp"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|uiMode" />
-        <!-- the screensaver: chosen by the user in the TV's settings (Screen saver) -->
-        <service android:name=".OmniDream" android:exported="true" android:label="OMNI Gallery" android:permission="android.permission.BIND_DREAM_SERVICE">
+        <activity android:name=".SlideshowActivity" android:exported="false" android:process=":gallery" android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|uiMode" />
+        <!-- the screensaver: chosen in the TV's settings (Screen saver) -->
+        <service android:name=".OmniDream" android:exported="true" android:process=":gallery" android:label="OMNI Gallery" android:permission="android.permission.BIND_DREAM_SERVICE">
             <intent-filter>
                 <action android:name="android.service.dreams.DreamService" />
                 <category android:name="android.intent.category.DEFAULT" />

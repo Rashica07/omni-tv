@@ -32,7 +32,7 @@ data class CinemaUi(val movies: List<Entry> = emptyList(), val shows: List<ShowR
                     val titles: List<Title> = emptyList(), val shelves: List<com.rasha.omni.library.Shelf> = emptyList(), val offlineHint: Boolean = false)
 
 class CinemaViewModel(app: Application) : AndroidViewModel(app) {
-    val lib = (app as CinemaApp).lib
+    val lib = CinemaLib.get(app)
     private val _ui = MutableStateFlow(CinemaUi())
     val ui: StateFlow<CinemaUi> = _ui.asStateFlow()
     private val _screen = MutableStateFlow<Screen>(Screen.Home)

@@ -26,7 +26,7 @@ class CinemaProvider : ContentProvider() {
     private fun titles(): List<Title> {
         val now = System.currentTimeMillis()
         cache?.let { if (now - it.first < 5000) return it.second }
-        val lib = (context!!.applicationContext as CinemaApp).lib
+        val lib = CinemaLib.get(context!!)
         return lib.titles().also { cache = now to it }
     }
 

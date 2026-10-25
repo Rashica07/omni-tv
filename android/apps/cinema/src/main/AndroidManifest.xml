@@ -1,31 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Only apps signed with the same (OMNI) key can hold this: it guards the catalogue provider and the deep-link door. -->
+    <!-- Cinema lives inside the OMNI app but in its own process (Compose and the video player load only when it is opened). The permission still guards the catalogue provider and the deep-link door against other apps. -->
     <permission android:name="com.rasha.omni.permission.CINEMA" android:protectionLevel="signature" />
-    <uses-feature android:name="android.software.leanback" android:required="false" />
-    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <!-- The OMNI server is on the home network over plain http (a PIN protects it); everything else the app contacts is https. -->
-    <application
-        android:name=".CinemaApp"
-        android:label="OMNI Cinema"
-        android:icon="@mipmap/ic_launcher"
-        android:banner="@drawable/banner"
-        android:allowBackup="false"
-        android:usesCleartextTraffic="true"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.OmniApp">
-        <activity android:name=".CinemaActivity" android:exported="true" android:launchMode="singleTask"
-            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|uiMode">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".DeepLinkActivity" android:exported="true" android:permission="com.rasha.omni.permission.CINEMA"
+    <application>
+        <activity android:name=".CinemaActivity" android:exported="false" android:process=":cinema" android:theme="@style/Theme.OmniApp" android:launchMode="singleTask"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|uiMode" />
+        <activity android:name=".DeepLinkActivity" android:exported="true" android:process=":cinema" android:permission="com.rasha.omni.permission.CINEMA"
             android:excludeFromRecents="true" android:noHistory="true" android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -33,9 +15,9 @@
                 <data android:scheme="omni-cinema" />
             </intent-filter>
         </activity>
-        <provider android:name=".CinemaProvider" android:authorities="com.rasha.omni.cinema.catalogue" android:exported="true"
+        <provider android:name=".CinemaProvider" android:authorities="com.rasha.omni.cinema.catalogue" android:exported="true" android:process=":cinema"
             android:readPermission="com.rasha.omni.permission.CINEMA" />
-        <activity android:name=".PlayerActivity" android:exported="false" android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+        <activity android:name=".PlayerActivity" android:exported="false" android:process=":cinema" android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|uiMode|smallestScreenSize|screenLayout" />
     </application>
 </manifest>
