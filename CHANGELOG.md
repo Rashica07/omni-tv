@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.3
+* **OMNI Cinema redesigned** as a premium streaming experience: charcoal / ivory / crimson / gold, a cinematic hero that follows focus with the artwork's own colour as ambient light, artwork-led poster and landscape cards with a restrained focus lift, rows that snap under the hero, a top navigation (Home, Movies, Shows, My List, Search, Sources), a new title page with More Like This, an on-screen-keyboard Search across titles, genres, years and descriptions, and a real My List kept on the TV. Rows exist only when the library can fill them. Playback, resume, sources and the server library are unchanged.
+* Fix found while testing on an Android TV 11 emulator: building the Home rows recursed forever (crash on open); now covered by a test.
+
 ## 1.0.0-rc.2
 * **One app.** Cinema, Weather, the Server dashboard and the screensaver are now inside the OMNI launcher APK (about 2.5 MB), each in its own process that exits when you close it. Guide, Play, Control and Reference are removed. One install, one update, no extra icons; weather uses the one place you picked for Home; the Server screen reuses the server you paired in Cinema.
 * Settings has *Server* and *Screensaver* rows. Upgrade note: uninstall the old separate OMNI apps first (they use the same names as the built-in Cinema, so Android refuses to keep both); Cinema's local data (the server pairing) must be entered once again, films and positions on your server are kept.

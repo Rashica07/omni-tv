@@ -178,7 +178,7 @@ private fun HomeTab(vm: CinemaViewModel, play: (Entry) -> Unit) {
                         Text(r.title, style = CineType.Row)
                         Text(r.items.size.toString(), style = CineType.Small)
                     }
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(start = 6.dp, end = 30.dp, top = 12.dp, bottom = 4.dp)) {
+                    LazyRow(Modifier.rowFence(), horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(start = 6.dp, end = 30.dp, top = 12.dp, bottom = 4.dp)) {
                         items(r.items, key = { r.id + it.id.text }) { t ->
                             val key = r.id + t.id.text
                             if (r.landscape) LandscapeCard(vm.lib, t, onClick = { vm.go(Screen.Title(t.id.text)) }, focusKey = key, restoreKey = vm.lastFocus, onFocused = { vm.lastFocus = key; focused = it })
@@ -215,7 +215,7 @@ private fun HeroActions(vm: CinemaViewModel, t: Title, play: (Entry) -> Unit, mo
     val saved by vm.myList.collectAsStateWithLifecycle()
     val inList = t.id.text in saved
     val resume = PlayRules.resumeAt(t.positionMs, t.durationMs)
-    Row(modifier.onFocusChanged { if (it.hasFocus) onFocus() }, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(modifier.onFocusChanged { if (it.hasFocus) onFocus() }.rowFence(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         if (t.kind != "show") CineButton(if (resume != null) "Resume  ${PlayRules.clock(resume)}" else "Play", { vm.playTitle(t, play) }, Modifier.focusRequester(first), BtnKind.Primary, icon = "▶")
         CineButton("More Info", { vm.go(Screen.Title(t.id.text)) }, if (t.kind == "show") Modifier.focusRequester(first) else Modifier, icon = "ⓘ")
         CineButton(if (inList) "In My List" else "My List", { vm.toggleList(t.id.text) }, icon = if (inList) "✓" else "+", iconColor = if (inList) Cine.Gold else null)
@@ -256,7 +256,7 @@ private fun GridTab(vm: CinemaViewModel, tab: Tab) {
             Text(tab.label, style = CineType.Page)
             if (list.isNotEmpty()) Text(if (list.size == 1) "1 title" else "${list.size} titles", Modifier.padding(bottom = 4.dp), style = CineType.Small)
         }
-        if (base.size > 1) LazyRow(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
+        if (base.size > 1) LazyRow(Modifier.padding(top = 10.dp).rowFence(), horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
             items(genres) { g -> Chip(g, g == genre) { genre = g } }
             item { Spacer(Modifier.width(10.dp)) }
             item { Chip("Sort: ${sort.label}", false) { sort = Sort.values()[(sort.ordinal + 1) % Sort.values().size] } }
@@ -268,7 +268,7 @@ private fun GridTab(vm: CinemaViewModel, tab: Tab) {
                 tab == Tab.Shows -> "No series in your library yet. Episodes named like “Show S01E02” on your server or USB drive appear here."
                 else -> "No films here yet. Add a source in Sources."
             }, Modifier.padding(top = 24.dp, start = 4.dp).widthIn(max = 560.dp), style = CineType.Body)
-        } else LazyVerticalGrid(GridCells.Fixed(7), Modifier.fillMaxSize().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
+        } else LazyVerticalGrid(GridCells.Fixed(7), Modifier.fillMaxSize().padding(top = 6.dp).rowFence(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
             contentPadding = PaddingValues(start = 6.dp, end = 6.dp, top = 12.dp, bottom = 40.dp)) {
             items(list.size, key = { list[it].id.text }) { i ->
                 val t = list[i]
@@ -336,7 +336,7 @@ private fun SearchTab(vm: CinemaViewModel) {
             }
             Column(Modifier.weight(1f)) {
                 Text(when { q.isBlank() -> "Your library: ${ui.titles.size} titles"; results.isEmpty() -> "Nothing in your library matches “$q”"; else -> "${results.size} found" }, style = CineType.Row)
-                LazyVerticalGrid(GridCells.Fixed(5), Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
+                LazyVerticalGrid(GridCells.Fixed(5), Modifier.fillMaxSize().rowFence(left = true), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
                     contentPadding = PaddingValues(start = 6.dp, end = 6.dp, top = 14.dp, bottom = 40.dp)) {
                     val shown = if (q.isBlank()) ui.titles.sortedByDescending { it.added } else results
                     items(shown.size, key = { shown[it].id.text }) { i ->

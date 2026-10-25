@@ -16,8 +16,10 @@ Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-
 | ![Assistant](docs/screenshots/assistant.jpg) | ![Notice](docs/screenshots/notice.jpg) |
 | **Remote buttons** | **Weather** |
 | ![Remote buttons](docs/screenshots/remote-buttons.jpg) | ![Weather](docs/screenshots/weather.jpg) |
-| **Cinema**, playing from your own server | **Title page** (public-domain film) |
-| ![Cinema](docs/screenshots/cinema-home.jpg) | ![Title](docs/screenshots/cinema-title.jpg) |
+| **OMNI Cinema**: cinematic hero, your server and free public-domain films | **Browsing rows** (the hero follows what you focus) |
+| ![Cinema](docs/screenshots/cinema-home.jpg) | ![Rows](docs/screenshots/cinema-rows.jpg) |
+| **Title page** with More Like This | **Movies** with genre filters, plus Search and My List |
+| ![Title](docs/screenshots/cinema-title.jpg) | ![Movies](docs/screenshots/cinema-movies.jpg) |
 
 ## What you get
 - **Welcome & setup**: a liquid-glass *WELCOME TO OMNI UI* first run over your wallpaper, then Home, a live remote check, OMNI server discovery on your network, weather place and permissions. Run it again any time from Settings.
@@ -28,7 +30,7 @@ Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-
 - **Control Center** on the right side, opened with the remote's **INFO** key: volume, HDMI inputs, server status, weather, network, shortcuts. Everything is done in place.
 - **Universal search** across apps, channels, films, inputs and settings.
 - **HDMI inputs** with a live preview card that expands to full screen with sound, without leaving the launcher. *Brand-dependent*, see Status.
-- **Cinema**: a native player app for your own films. It reads a library from your home server, resumes where you stopped, and shares that position across devices.
+- **OMNI Cinema**: a streaming-style home for your own films (charcoal, ivory, crimson and gold, with the artwork setting the mood): a cinematic hero, rows for Continue Watching, My List, Recently Added, your server, free films and genres, Movies / Shows / My List / Search tabs, title pages with More Like This. It plays from your home server (resuming where you stopped, on any device), USB drives and the Internet Archive.
 - **Weather, Server status and the Screensaver** are built into the same app (each runs in its own process and exits when you close it): the weather screen, the home-server dashboard, and landscape photos when the TV is idle. No separate installs, no extra icons.
 - **`omniptvd`**: a home server in plain Python (standard library only) that scans a folder of films, matches posters and overviews through TMDB, streams the original files with byte ranges, and keeps watch positions.
 

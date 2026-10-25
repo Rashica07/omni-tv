@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.focusGroup
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -167,3 +169,14 @@ fun CineCard(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Compo
         .then(if (focused) Modifier.border(2.dp, Cine.Ivory, shape) else Modifier)
         .clip(shape).background(bg).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp)) { content() }
 }
+
+/**
+ * Remote-control rule for rows: Left and Right stay inside (at the end of a short row focus stops, it never jumps to the navigation bar); Up and Down
+ * leave as usual. [left] = true lets Left out (the search results, whose keyboard is on the left).
+ */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+fun Modifier.rowFence(left: Boolean = false): Modifier = this
+    .focusProperties {
+        exit = { d -> if (d == androidx.compose.ui.focus.FocusDirection.Right || (d == androidx.compose.ui.focus.FocusDirection.Left && !left)) androidx.compose.ui.focus.FocusRequester.Cancel else androidx.compose.ui.focus.FocusRequester.Default }
+    }
+    .focusGroup()

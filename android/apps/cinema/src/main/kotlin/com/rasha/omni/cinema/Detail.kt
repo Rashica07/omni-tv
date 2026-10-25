@@ -99,7 +99,7 @@ fun TitleScreen(vm: CinemaViewModel, s: Screen.Title, play: (Entry) -> Unit) {
                     }
                     val resume = PlayRules.resumeAt(title.positionMs, title.durationMs)
                     val inList = title.id.text in saved
-                    Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.padding(top = 6.dp).rowFence(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         CineButton(if (resume != null) "Resume  ${PlayRules.clock(resume)}" else if (title.watched) "Watch Again" else "Play", { vm.playTitle(title, play) }, Modifier.focusRequester(fr), BtnKind.Primary, icon = "▶")
                         if (resume != null) CineButton("From the Start", { vm.setWatched(title.copies.first(), false) { vm.playTitle(title, play) } }, icon = "↺")
                         CineButton(if (inList) "In My List" else "My List", { vm.toggleList(title.id.text) }, icon = if (inList) "✓" else "+", iconColor = if (inList) Cine.Gold else null)
@@ -111,7 +111,7 @@ fun TitleScreen(vm: CinemaViewModel, s: Screen.Title, play: (Entry) -> Unit) {
             if (rel.isNotEmpty()) run {
                 Column(Modifier.padding(top = 8.dp)) {
                     Text("More Like This", style = CineType.Row)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(start = 4.dp, end = 30.dp, top = 12.dp, bottom = 4.dp)) {
+                    LazyRow(Modifier.rowFence(), horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(start = 4.dp, end = 30.dp, top = 12.dp, bottom = 4.dp)) {
                         items(rel, key = { "rel" + it.id.text }) { r -> PosterCard(vm.lib, r, onClick = { vm.go(Screen.Title(r.id.text)) }, width = 100.dp, saved = r.id.text in saved) }
                     }
                 }
