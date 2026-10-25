@@ -1,3 +1,5 @@
+<p align="right"><a href="https://kiqa-dev.it"><b>Software by KIQA.DEV</b></a></p>
+
 # OMNI TV
 
 **A fast, ad-free, black-and-white operating-system layer for cheap Android TVs.**
@@ -68,3 +70,7 @@ Tests first: `launcher/test/run.sh <jdk17>` (3298 checks), `python3 -I server/se
 
 ## License
 Apache License 2.0, see [`LICENSE`](LICENSE). Third-party material is listed in [`THIRD-PARTY.md`](THIRD-PARTY.md). Trademarks belong to their owners.
+
+---
+
+<p align="center">Software licensed by <a href="https://kiqa-dev.it"><b>KIQA.DEV</b></a> under the Apache License 2.0 · <a href="https://kiqa-dev.it">kiqa-dev.it</a></p>
