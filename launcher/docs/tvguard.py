@@ -27,6 +27,13 @@ def state():
 
 if __name__ == "__main__":
     if os.environ.get("TVGUARD") == "off": sys.exit(0)
+    try:
+        reach = subprocess.run(["adb", "-s", TV, "get-state"], capture_output=True, text=True, timeout=15).stdout.strip()
+    except Exception:
+        reach = ""
+    if reach != "device":
+        print(f"TV not reachable ({TV}): treating it as not free.", file=sys.stderr)
+        sys.exit(4)
     fg, playing = state()
     # live TV, the antenna and HDMI inputs are watched through the TV maker's own app and have no media session: that app in front means someone is watching
     TV_APPS = ("com.mediatek.wwtv.tvcenter", "com.android.tv", "com.google.android.tvlauncher")
