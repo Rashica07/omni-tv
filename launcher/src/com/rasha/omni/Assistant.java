@@ -44,7 +44,7 @@ final class Assistant extends FrameLayout {
     }
 
     private static final int IDLE = 0, LISTENING = 1, THINKING = 2, RESULT = 3, ERROR = 4, TYPING = 5;
-    private static final float SHEET_H = 188f, SIDE = 56f, BOTTOM = 34f;
+    private static final float PILL_H = 64f, TALL_H = 134f, SIDE = 40f, TOP = 24f;
 
     private final Actions actions;
     private final Ambient ambient;
@@ -58,15 +58,10 @@ final class Assistant extends FrameLayout {
     private int focus;
     private float rms;                          // 0..1, smoothed microphone level
     private boolean closing, gone;
-    private float shown, lift;
-    private final Spring liftSpring = new Spring(240f, 0.86f, 0f, 0.002f, v -> { lift = v; place(); });
-
-    /** Typing: the on-screen keyboard takes the bottom half, so the sheet rises to the top. */
-    private void place() {
-        float up = lift * Math.max(0, getHeight() - dp(SHEET_H) - dp(BOTTOM) - dp(28));
-        sheet.setTranslationY(dp(SHEET_H + 60) * (1f - shown) - up);
-        field.setTranslationY(-up);
-    }
+    private float shown, grow;
+    /** The pill gets a second row (the chips) when there are results: 0 = the slim pill, 1 = the taller card. */
+    private final Spring growSpring = new Spring(260f, 0.86f, 0f, 0.002f, v -> { grow = Math.max(0f, Math.min(1f, v)); invalidateSheet(); });
+    private void invalidateSheet() { if (sheet != null) sheet.invalidate(); }
 
     Assistant(Context c, Ambient amb, Actions a) {
         super(c);
@@ -75,8 +70,8 @@ final class Assistant extends FrameLayout {
         setClickable(true);
         setWillNotDraw(false);
         sheet = new Sheet(c);
-        LayoutParams sp = new LayoutParams(-1, dp(SHEET_H), Gravity.BOTTOM);
-        sp.leftMargin = dp(SIDE); sp.rightMargin = dp(SIDE); sp.bottomMargin = dp(BOTTOM);
+        LayoutParams sp = new LayoutParams(-1, dp(TALL_H), Gravity.TOP);
+        sp.leftMargin = dp(SIDE); sp.rightMargin = dp(SIDE); sp.topMargin = dp(TOP);
         addView(sheet, sp);
         field = new EditText(c);
         field.setSingleLine(true);
@@ -89,14 +84,17 @@ final class Assistant extends FrameLayout {
         field.setImeOptions(EditorInfo.IME_ACTION_GO);
         field.setVisibility(View.GONE);
         field.setOnEditorActionListener((v, id, ev) -> { String t = field.getText().toString().trim(); if (!t.isEmpty()) understood(t); return true; });
-        LayoutParams fp = new LayoutParams(-1, dp(56), Gravity.BOTTOM);
-        fp.leftMargin = dp(SIDE + 100); fp.rightMargin = dp(SIDE + 30); fp.bottomMargin = dp(BOTTOM + 104);
+        LayoutParams fp = new LayoutParams(-1, dp(PILL_H), Gravity.TOP);
+        fp.leftMargin = dp(SIDE + 86); fp.rightMargin = dp(SIDE + 30); fp.topMargin = dp(TOP);
         addView(field, fp);
-        sheet.setTranslationY(dp(SHEET_H + 60));
+        sheet.setTranslationY(-dp(TALL_H + TOP + 20));
+        sheet.setAlpha(0f);
         in = new Spring(260f, 0.84f, 0f, 0.002f, v -> {
             shown = Math.max(0f, Math.min(1f, v));
-            place();
-            invalidate();
+            sheet.setTranslationY(-dp(TALL_H + TOP + 20) * (1f - v));          // it drops in from the top edge, like a notification
+            sheet.setAlpha(Math.min(1f, v * 1.4f));
+            field.setTranslationY(-dp(TALL_H + TOP + 20) * (1f - v));
+            field.setAlpha(shown);
             if (closing && v < 0.01f) finish();
         });
     }
@@ -157,7 +155,7 @@ final class Assistant extends FrameLayout {
         stopRecognizer();
         setState(TYPING);
         chips.clear();
-        liftSpring.to(1f);
+        growSpring.to(0f);
         field.setVisibility(View.VISIBLE);
         field.setText("");
         field.requestFocus();
@@ -169,7 +167,6 @@ final class Assistant extends FrameLayout {
         partial = "";
         field.setVisibility(View.GONE);
         hideKeyboard();
-        liftSpring.to(0f);
         stopRecognizer();
         chips.clear();
         for (Intents.Action a : Intents.parse(heard, actions.apps(), actions.inputs())) if (a.kind != Intents.ASK || actions.canAsk()) chips.add(a);
@@ -196,7 +193,7 @@ final class Assistant extends FrameLayout {
         else { heard = a.label; sheet.invalidate(); }
     }
 
-    private void setState(int s) { state = s; sheet.invalidate(); if (s == LISTENING) sheet.postInvalidateOnAnimation(); }
+    private void setState(int s) { state = s; growSpring.to(s == RESULT || s == ERROR ? 1f : 0f); sheet.invalidate(); if (s == LISTENING) sheet.postInvalidateOnAnimation(); }
 
     private void hideKeyboard() {
         android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -221,22 +218,6 @@ final class Assistant extends FrameLayout {
         gone = true;
         if (getParent() instanceof ViewGroup) ((ViewGroup) getParent()).removeView(this);
         actions.closed();
-    }
-
-    /** The dim behind the sheet: darker toward the bottom, where the sheet is. One gradient rect, only while shown. */
-    private final Paint dim = new Paint();
-    private LinearGradient dimShader;
-
-    @Override protected void onSizeChanged(int w, int h, int ow, int oh) {
-        super.onSizeChanged(w, h, ow, oh);
-        dimShader = new LinearGradient(0, 0, 0, h, new int[]{0x55000000, 0x99000000, 0xDD000000}, new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP);
-    }
-
-    @Override protected void onDraw(Canvas c) {
-        if (dimShader == null) return;
-        dim.setShader(dimShader);
-        dim.setAlpha((int) (255 * shown));
-        c.drawRect(0, 0, getWidth(), getHeight(), dim);
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
@@ -271,25 +252,32 @@ final class Assistant extends FrameLayout {
             super(c);
             setFocusable(true);
             for (TextPaint t : new TextPaint[]{big, small, chip}) t.setTypeface(Theme.geist);
-            big.setTextSize(dp(26)); big.setColor(Theme.WHITE);
-            small.setTextSize(dp(13)); small.setColor(Theme.TEXT3);
+            big.setTextSize(dp(20)); big.setColor(Theme.WHITE);
+            small.setTextSize(dp(11)); small.setColor(Theme.TEXT3);
             chip.setTextSize(dp(15)); chip.setColor(Theme.WHITE); chip.setTextAlign(Paint.Align.CENTER);
             if (Build.VERSION.SDK_INT >= 26) { big.setFontVariationSettings("'wght' 650"); small.setFontVariationSettings("'wght' 600"); chip.setFontVariationSettings("'wght' 600"); }
             for (int i = 0; i < chipRects.length; i++) chipRects[i] = new RectF();
         }
 
         @Override protected void onDraw(Canvas c) {
-            r.set(0, 0, getWidth(), getHeight());
-            Glass.draw(c, r, dp(34), ambient, getLeft(), getTop() + getTranslationY(), 1f, true);
-            float wx = dp(56), wy = dp(62);
-            drawWave(c, wx, wy);
-            String label = state == LISTENING ? "Listening…" : state == THINKING ? "One moment…" : state == TYPING ? "Typing" : state == ERROR ? "" : "You said";
-            c.drawText(label.toUpperCase(java.util.Locale.ROOT), dp(112), dp(40), small);
-            String line = state == LISTENING ? (partial.isEmpty() ? "Say something like “open YouTube” or “PlayStation”" : partial) : state == THINKING ? partial : state == TYPING ? "" : heard;
+            float h = dp(PILL_H) + (dp(TALL_H) - dp(PILL_H)) * grow;
+            r.set(0, 0, getWidth(), h);
+            float rad = Math.min(h / 2f, dp(32));
+            Glass.draw(c, r, rad, ambient, getLeft(), getTop() + getTranslationY(), 1f, true);
+            float cy = dp(PILL_H) / 2f;
+            drawWave(c, dp(46), cy);
+            String label = state == LISTENING ? "LISTENING" : state == THINKING ? "ONE MOMENT" : state == TYPING ? "" : state == ERROR ? "" : "YOU SAID";
+            float x = dp(86);
+            String line = state == LISTENING ? (partial.isEmpty() ? "Say \u201copen YouTube\u201d, \u201cPlayStation\u201d, \u201cweather\u201d\u2026" : partial) : state == THINKING ? partial : state == TYPING ? "" : heard;
             big.setColor(state == LISTENING && partial.isEmpty() ? Theme.TEXT3 : Theme.WHITE);
-            CharSequence shown = TextUtils.ellipsize(line, big, getWidth() - dp(112 + 36), TextUtils.TruncateAt.START);
-            c.drawText(shown, 0, shown.length(), dp(112), dp(76), big);
-            drawChips(c);
+            float w = getWidth() - x - dp(150);
+            if (!label.isEmpty()) c.drawText(label, x, dp(24), small);
+            CharSequence shown = TextUtils.ellipsize(line, big, w, TextUtils.TruncateAt.START);
+            c.drawText(shown, 0, shown.length(), x, label.isEmpty() ? cy + dp(7) : dp(49), big);
+            small.setTextAlign(Paint.Align.RIGHT);
+            c.drawText(state == TYPING ? "OK on a key \u00b7 Back closes" : "Back closes", getWidth() - dp(28), cy + dp(4), small);
+            small.setTextAlign(Paint.Align.LEFT);
+            if (grow > 0.35f) drawChips(c);
             if (state == LISTENING) postInvalidateOnAnimation();
         }
 
@@ -300,25 +288,26 @@ final class Assistant extends FrameLayout {
             for (int i = 0; i < bars.length; i++) {
                 float target;
                 if (state == LISTENING) target = 0.25f + rms * (0.55f + 0.45f * (float) Math.abs(Math.sin(t / 140.0 + i * 1.3)));
-                else if (state == THINKING) target = 0.25f + 0.25f * (float) Math.abs(Math.sin(t / 220.0 + i * 0.9));
-                else target = 0.22f;
+                else if (state == THINKING) target = 0.3f + 0.3f * (float) Math.abs(Math.sin(t / 220.0 + i * 0.9));
+                else target = 0.34f;
                 bars[i] += (target - bars[i]) * 0.35f;
-                float h = dp(46) * bars[i], x = cx - dp(24) + i * dp(12);
-                r.set(x - dp(3.5f), cy - h / 2f, x + dp(3.5f), cy + h / 2f);
-                c.drawRoundRect(r, dp(3.5f), dp(3.5f), p);
+                float h = dp(34) * bars[i], x = cx - dp(20) + i * dp(10);
+                r.set(x - dp(3f), cy - h / 2f, x + dp(3f), cy + h / 2f);
+                c.drawRoundRect(r, dp(3f), dp(3f), p);
             }
             if (state == THINKING) postInvalidateOnAnimation();
         }
 
         private void drawChips(Canvas c) {
             if (chips.isEmpty()) return;
-            float x = dp(112), y = getHeight() - dp(30) - dp(46);
+            chip.setAlpha(255);
+            float x = dp(86), y = dp(PILL_H) + dp(2);
             int n = Math.min(chips.size(), chipRects.length);
             for (int i = 0; i < n; i++) {
                 String l = chips.get(i).label;
                 float w = Math.min(getWidth() - x - dp(30), chip.measureText(l) + dp(36));
                 if (w < dp(80)) { n = i; break; }
-                chipRects[i].set(x, y, x + w, y + dp(46));
+                chipRects[i].set(x, y, x + w, y + dp(44));
                 x += w + dp(10);
             }
             focus = Math.max(0, Math.min(n - 1, focus));

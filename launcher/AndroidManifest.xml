@@ -56,6 +56,12 @@
             android:exported="true"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
         <service android:name=".HdmiOverlay" android:exported="false" />
+        <!-- optional: only runs if the person turns it on in Accessibility; sees only the buttons assigned in Settings > Remote buttons -->
+        <service android:name=".KeyService" android:exported="true" android:label="OMNI remote buttons"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/key_service" />
+        </service>
         <!-- only so the system shares active media sessions (casting to this TV); it reads no notifications -->
         <service android:name=".MediaListener" android:exported="true" android:label="OMNI casting notices"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">

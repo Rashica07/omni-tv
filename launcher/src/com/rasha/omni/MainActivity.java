@@ -176,6 +176,7 @@ public class MainActivity extends Activity implements Host {
     private Welcome welcome;
     private Assistant assistant;
     private DeviceWatch devices;
+    static final String EXTRA_KEY_ACTION = "omni_key_action";
     private KeyMap keyMap;
     private boolean capturingKey;
     private volatile List<Inputs.Entry> assistInputs = new ArrayList<>();
@@ -443,6 +444,11 @@ public class MainActivity extends Activity implements Host {
             labels.add(keyLabel(key) + "  \u2192  " + KeyMap.actionName(en.getValue()));
             acts.add(() -> closeSheet(() -> chooseAction(key)));
         }
+        labels.add("Use the buttons everywhere: " + (KeyService.enabled(this) ? "On" : "Off"));
+        acts.add(() -> closeSheet(() -> {
+            try { startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); flash("Turn on \u201cOMNI remote buttons\u201d", "It only sees the buttons you assigned"); }
+            catch (Exception e) { flash("This TV hides that setting", "adb: settings put secure enabled_accessibility_services " + new android.content.ComponentName(this, KeyService.class).flattenToString()); }
+        }));
         labels.add("Add a button");
         acts.add(() -> closeSheet(() -> { capturingKey = true; banner.show(Banner.MODE_MOVE, "Press a button on your remote", "Any button except arrows, OK, Back, Home, volume and power"); }));
         labels.add("Back to the defaults");
@@ -489,10 +495,14 @@ public class MainActivity extends Activity implements Host {
             @Override public void run(Intents.Action a) { runIntent(a); }
             @Override public void closed() {
                 assistant = null;
+                nav.animate().alpha(1f).setDuration(200).start();
+                status.animate().alpha(1f).setDuration(200).start();
                 setFocusBlocked(false);
                 if (before != null && before.isAttachedToWindow()) before.requestFocus();
             }
         });
+        nav.animate().alpha(0f).setDuration(160).start();                 // the pill takes the navbar's place, like a notification
+        status.animate().alpha(0f).setDuration(160).start();
         assistant.show(ambient);
         OmniLog.state("assistant=open");
     }
@@ -928,6 +938,8 @@ public class MainActivity extends Activity implements Host {
         if (OmniLog.flag("OmniDebugOpen") && "control".equals(intent.getStringExtra("open"))) { openControlCenter(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "search".equals(intent.getStringExtra("open"))) { openUniversalSearch(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "wallpaper".equals(intent.getStringExtra("open"))) { nav.select(4, false); selectTab(4); ui.postDelayed(() -> ((SettingsPage) pages[4]).openWallpaperMenu(), 700); return; }   // developer profiling only
+        String ka = intent.getStringExtra(EXTRA_KEY_ACTION);
+        if (ka != null && !ka.startsWith("app:") && KeyMap.known(ka)) { if (welcome == null && cc == null && assistant == null) runKeyAction(ka); return; }     // a mapped button pressed while another app was in front
         boolean fromApp = launched;
         launched = false;
         if (fromApp) repo.clearRecentLaunch();

@@ -50,8 +50,8 @@ No analytics, advertising, crash reporting or tracking code is included. The onl
 |---|---|
 | `api.themoviedb.org`, `image.tmdb.org` | film metadata and posters (TMDB) |
 | `api.open-meteo.com` | weather |
-| `www.bing.com` | the daily wallpaper (Settings > Wallpaper can switch to Wikimedia Commons) |
-| `commons.wikimedia.org`, `upload.wikimedia.org` | Gallery screensaver landscapes |
+| `www.bing.com` | the daily photo, **only if you choose it** in Settings > Wallpaper (the default source is Wikimedia Commons) |
+| `commons.wikimedia.org`, `upload.wikimedia.org` | wallpapers (default) and the Gallery screensaver landscapes |
 | `archive.org` | optional public-domain films in Cinema |
 | your own network only | OMNI server discovery (port 8765) and Chromecast discovery (mDNS); library, streaming and status from your own server (plain http, PIN protected, LAN only) |
 
