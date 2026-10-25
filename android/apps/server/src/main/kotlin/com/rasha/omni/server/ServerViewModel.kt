@@ -23,6 +23,20 @@ class ServerViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("server", 0)
     private val _ui = MutableStateFlow(ServerUi(paired = prefs.contains("pin"), address = prefs.getString("addr", "") ?: "", events = loadEvents()))
     private var prevSnap: Snapshot? = null
+
+    init { if (!prefs.contains("pin")) autoPair(app) }
+
+    /** Cinema and this screen are one app: if Cinema already knows your OMNI server (address and PIN), use it instead of asking again. */
+    private fun autoPair(app: Application) {
+        try {
+            val db = com.rasha.omni.library.LibraryDb(app)
+            val row = try { db.sources().firstOrNull { it.kind == com.rasha.omni.library.SourceKind.Lan } } finally { db.close() } ?: return
+            val pin = app.getSharedPreferences("cinema", 0).getString("pin_${row.id}", null) ?: return
+            val addr = row.base.removePrefix("http://")
+            prefs.edit().putString("addr", addr).putString("pin", pin).apply()
+            _ui.value = _ui.value.copy(paired = true, address = addr)
+        } catch (e: Exception) { }
+    }
     val ui: StateFlow<ServerUi> = _ui.asStateFlow()
     private var loop: Job? = null
 

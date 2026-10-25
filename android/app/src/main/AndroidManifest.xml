@@ -37,6 +37,7 @@
     </queries>
 
     <application
+        android:name=".OmniApp"
         android:label="OMNI TvOS"
         android:allowBackup="false"
         android:usesCleartextTraffic="true"

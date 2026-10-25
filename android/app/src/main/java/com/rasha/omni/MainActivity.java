@@ -957,6 +957,10 @@ public class MainActivity extends Activity implements Host {
             startActivity(new Intent().setClassName(this, "com.rasha.omni.cinema.CinemaActivity").putExtra("addLan", intent.getStringExtra("host")).putExtra("pin", intent.getStringExtra("pin")));
             return;
         }
+        if (OmniLog.flag("OmniDebugOpen") && ("server".equals(intent.getStringExtra("open")) || "screensaver".equals(intent.getStringExtra("open")))) {      // developer check of the built-in screens
+            startActivity(new Intent().setClassName(this, "server".equals(intent.getStringExtra("open")) ? "com.rasha.omni.server.ServerActivity" : "com.rasha.omni.gallery.GalleryActivity"));
+            return;
+        }
         if (OmniLog.flag("OmniDebugOpen") && "remote".equals(intent.getStringExtra("open"))) { openRemoteButtons(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "notice".equals(intent.getStringExtra("open"))) { deviceEvent(EventRules.audio("JBL Bar", EventRules.A_BT_A2DP, true, false)); return; }       // developer check of the notice path
         if (OmniLog.flag("OmniDebugOpen") && "control".equals(intent.getStringExtra("open"))) { openControlCenter(); return; }
