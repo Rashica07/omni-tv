@@ -1,0 +1,24 @@
+[Unit]
+Description=OMNIPTV catalogue and health service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=omniptv
+Group=omniptv
+Environment=OMNIPTV_CONFIG=/etc/omniptv/config.json
+ExecStart=/usr/bin/python3 -I /opt/omniptv/omniptvd.py
+Restart=always
+RestartSec=5
+# the service needs nothing but outbound HTTPS and one LAN port
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadWritePaths=/var/lib/omniptv
+MemoryMax=150M
+CPUQuota=60%
+
+[Install]
+WantedBy=multi-user.target

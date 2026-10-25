@@ -1,0 +1,16 @@
+# secrets and build output: never commit these
+tmdb.token
+omni.keystore
+build/
+*.apk
+*.idsig
+
+# reference screenshots are third-party material kept for private design analysis only:
+# never commit them and never package them (INDEX.md and the generated boards are tracked)
+docs/design/references/*/*.jpg
+docs/design/references/*/*.jpeg
+docs/design/references/*/*.png
+docs/design/references/*/*.webp
+docs/design/references/*/*.gif
+docs/design/boards/*.png
+!docs/design/references/**/.gitkeep

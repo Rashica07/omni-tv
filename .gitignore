@@ -1,0 +1,14 @@
+# secrets and build output: never commit these
+tmdb.token
+*.keystore
+*.jks
+*.apk
+*.idsig
+build/
+.gradle/
+local.properties
+.idea/
+__pycache__/
+# third-party trademarks and private reference screenshots stay on your own machine
+launcher/assets/logos/
+launcher/docs/design/references/*/*.{jpg,jpeg,png,webp,gif}

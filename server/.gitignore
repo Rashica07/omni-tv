@@ -1,0 +1,3 @@
+research/raw/
+*.token
+__pycache__/

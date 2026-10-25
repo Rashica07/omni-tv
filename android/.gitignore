@@ -1,0 +1,7 @@
+local.properties
+build/
+.gradle/
+*.keystore
+*.jks
+.idea/
+tmdb.token
