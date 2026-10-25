@@ -16,6 +16,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** The top navigation's destinations. Home is the root; Back from any other tab returns to it. */
+enum class Tab(val label: String) { Home("Home"), Movies("Movies"), Shows("Shows"), MyList("My List"), Search("Search") }
+
 sealed class Screen {
     object Home : Screen()
     data class Title(val id: String, val notice: String? = null) : Screen()
@@ -39,6 +42,23 @@ class CinemaViewModel(app: Application) : AndroidViewModel(app) {
     val screen: StateFlow<Screen> = _screen.asStateFlow()
     private val _msg = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _msg.asStateFlow()
+    private val _tab = MutableStateFlow(Tab.Home)
+    val tab: StateFlow<Tab> = _tab.asStateFlow()
+    fun tab(t: Tab) { _tab.value = t }
+
+    /** My List: titles you saved, kept on this TV (stable ids, so a film stays in the list across rescans and server moves). */
+    private val prefs = app.getSharedPreferences("cinema", android.content.Context.MODE_PRIVATE)
+    private val _myList = MutableStateFlow(prefs.getStringSet("mylist", emptySet())!!.toSet())
+    val myList: StateFlow<Set<String>> = _myList.asStateFlow()
+    fun toggleList(id: String) {
+        val now = _myList.value.toMutableSet().apply { if (!add(id)) remove(id) }
+        prefs.edit().putStringSet("mylist", now).apply()
+        _myList.value = now
+    }
+
+    /** Search text, kept while you move between results and a title page. */
+    val query = MutableStateFlow("")
+
     /** Which poster had focus on Home, so coming back from a detail screen lands on it again. */
     var lastFocus: String? = null
     private val back = ArrayDeque<Screen>()

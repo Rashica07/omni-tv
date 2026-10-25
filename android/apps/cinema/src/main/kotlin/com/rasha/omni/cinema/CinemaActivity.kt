@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +42,7 @@ class CinemaActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) debugSetup(intent)
         if (savedInstanceState == null) vm.start(intent.getStringExtra(Router.R), intent.getStringExtra(Router.ID), intent.getStringExtra(Router.NOTICE))
-        setContent { OmniTheme { Root(vm, exit = { finish() }, play = { e -> startActivity(Intent(this, PlayerActivity::class.java).putExtra("s", e.sourceId).putExtra("p", e.path)) }) } }
+        setContent { OmniTheme { androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize().background(Cine.Bg)) { Root(vm, exit = { finish() }, play = { e -> startActivity(Intent(this@CinemaActivity, PlayerActivity::class.java).putExtra("s", e.sourceId).putExtra("p", e.path)) }) } } }
     }
 
     /** Developer setup only (`setprop log.tag.OmniDebugOpen DEBUG`): add sources and scan from adb. Ignored in normal use. */
@@ -63,10 +64,12 @@ private fun Root(vm: CinemaViewModel, play: (Entry) -> Unit, exit: () -> Unit) {
     val screen by vm.screen.collectAsStateWithLifecycle()
     val scanning by vm.lib.scanning.collectAsStateWithLifecycle()
     // Back goes to the previous Cinema screen; at the root of a task (Home, or a title opened from the launcher) it leaves, back to where the user came from
+    val tab by vm.tab.collectAsStateWithLifecycle()
     BackHandler(enabled = screen !is Screen.Home) { if (!vm.back()) exit() }
+    BackHandler(enabled = screen is Screen.Home && tab != Tab.Home) { vm.tab(Tab.Home) }      // other tabs go back to Home first; Back on Home leaves Cinema
     LaunchedEffect(scanning.isEmpty()) { vm.reload() }              // when a scan finishes the shelves refresh
     when (val s = screen) {
-        Screen.Home -> HomeScreen(vm, play)
+        Screen.Home -> BrowseScreen(vm, play)
         is Screen.Title -> TitleScreen(vm, s, play)
         is Screen.Show -> ShowScreen(vm, s, play)
         Screen.Sources -> SourcesScreen(vm)

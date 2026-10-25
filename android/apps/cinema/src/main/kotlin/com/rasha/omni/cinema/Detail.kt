@@ -1,17 +1,25 @@
 package com.rasha.omni.cinema
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,75 +31,117 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
-import com.rasha.omni.design.OmniCard
-import com.rasha.omni.design.PillButton
-import com.rasha.omni.design.OmniColor
-import com.rasha.omni.design.OmniScreen
-import com.rasha.omni.design.OmniType
+import com.rasha.omni.library.ApiPath
+import com.rasha.omni.library.Availability
 import com.rasha.omni.library.Entry
 import com.rasha.omni.library.PlayRules
+import com.rasha.omni.library.SourceKind
+import com.rasha.omni.library.Title
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private fun meta(e: Entry) = listOfNotNull(e.year?.toString(), e.runtimeMin.takeIf { it > 0 }?.let { "${it / 60}h ${it % 60}m" }, e.rating.takeIf { it > 0 }?.let { "%.1f / 10".format(it) }, e.genres.takeIf { it.isNotEmpty() }).joinToString("   ·   ")
+private fun sourceName(k: SourceKind?) = when (k) { SourceKind.Lan -> "OMNI server"; SourceKind.Local -> "This TV or USB"; SourceKind.Archive -> "Internet Archive"; else -> "Source" }
+
+/** Titles that share a genre with this one, best rated first. Only from the library: nothing is recommended that you cannot open. */
+private fun related(t: Title, all: List<Title>): List<Title> {
+    val g = t.genres.split(", ").filter { it.isNotBlank() }.toSet()
+    if (g.isEmpty()) return emptyList()
+    return all.filter { it.id != t.id && it.genres.split(", ").any { x -> x in g } }.sortedWith(compareByDescending<Title> { o -> o.genres.split(", ").count { it in g } }.thenByDescending { it.rating }).take(12)
+}
 
 @Composable
 fun TitleScreen(vm: CinemaViewModel, s: Screen.Title, play: (Entry) -> Unit) {
     val ui by vm.ui.collectAsStateWithLifecycle()                          // reload after watch-state changes
-    val msg by vm.message.collectAsStateWithLifecycle()
-    var t by remember { mutableStateOf<com.rasha.omni.library.Title?>(null) }
+    val saved by vm.myList.collectAsStateWithLifecycle()
+    var t by remember { mutableStateOf<Title?>(null) }
     var loaded by remember { mutableStateOf(false) }
     LaunchedEffect(s, ui) { t = vm.title(s.id); loaded = true }
     val fr = remember { FocusRequester() }
     LaunchedEffect(t != null) { if (t != null) try { fr.requestFocus() } catch (x: Exception) { } }
     val title = t
     if (title != null && title.kind == "show") { ShowScreen(vm, Screen.Show(title.copies.first().showId), play); return }
-    Box(Modifier.fillMaxSize().background(OmniColor.Bg)) {
-    HeroBackdrop(vm.lib, title?.backdrop)
-    OmniScreen(background = androidx.compose.ui.graphics.Color.Transparent) {
-        if (!loaded) return@OmniScreen
+    val tint = rememberTint(vm.lib, title?.backdrop)
+    Box(Modifier.fillMaxSize().background(Cine.Bg)) {
+        HeroBackdrop(vm.lib, title?.backdrop)
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.55f to Color.Transparent, 1f to tint.copy(alpha = 0.16f))))
+        if (!loaded) return@Box
         if (title == null) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Not available", style = OmniType.Heading.copy(fontSize = 28.sp))
-                Text(s.notice ?: "This title is not in your library.", style = OmniType.Body.copy(fontSize = 16.sp, color = OmniColor.Text2))
-                PillButton("Back to library", { vm.back() || run { vm.go(Screen.Home); true } }, Modifier.focusRequester(fr), primary = true)
+            Column(Modifier.padding(start = 56.dp, top = 120.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Not available", style = CineType.Hero)
+                Text(s.notice ?: "This title is not in your library.", Modifier.widthIn(max = 520.dp), style = CineType.Body)
+                CineButton("Back", { vm.back() || run { vm.go(Screen.Home); true } }, Modifier.focusRequester(fr), BtnKind.Primary)
             }
             LaunchedEffect(Unit) { try { fr.requestFocus() } catch (x: Exception) { } }
-            return@OmniScreen
+            return@Box
         }
-        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            Poster(vm.lib, title.poster, title.title, null, {}, width = 140.dp, modifier = Modifier.padding(top = 12.dp), watched = title.watched)
-            Column(Modifier.weight(1f).widthIn(max = 520.dp).padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(title.title, maxLines = 2, style = OmniType.Heading.copy(fontSize = if (title.title.length < 26) 32.sp else 26.sp))
-                Text(listOfNotNull(title.year?.toString(), title.rating.takeIf { it > 0 }?.let { "\u2605 %.1f".format(it) }, title.runtimeMin.takeIf { it > 0 }?.let { "${it / 60}h ${it % 60}m" }, title.genres.takeIf { it.isNotEmpty() }).joinToString("    "), style = OmniType.Label.copy(fontSize = 13.sp, color = OmniColor.Text2))
-                s.notice?.let { Text(it, style = OmniType.Body.copy(fontSize = 14.sp, color = OmniColor.Warning)) }
-                Text(title.overview.ifEmpty { "No description found. This item has not been matched with a metadata provider yet; scan again when online." }, maxLines = 5, style = OmniType.Body.copy(fontSize = 13.sp, color = OmniColor.Text2))
-                Text("WHERE IT PLAYS FROM", Modifier.padding(top = 4.dp), style = OmniType.Caption)
-                val av = remember(title) { mutableStateOf<Map<Long, com.rasha.omni.library.Availability>>(emptyMap()) }
-                LaunchedEffect(title.id) { av.value = withContext(Dispatchers.IO) { vm.lib.availabilities() } }
-                title.copies.forEach { c ->
-                    val kind = ui.kinds[c.sourceId]
-                    val state = av.value[c.sourceId]
-                    Text((when (kind) { com.rasha.omni.library.SourceKind.Lan -> "OMNI server"; com.rasha.omni.library.SourceKind.Local -> "This TV or USB"; com.rasha.omni.library.SourceKind.Archive -> "Internet Archive"; else -> "Source" }) +
-                        "    " + (if (com.rasha.omni.library.ApiPath.isApi(c.path)) "server library" else c.path.substringAfterLast('/')) + "    " + (when (state) { com.rasha.omni.library.Availability.PLAYABLE -> "reachable"; com.rasha.omni.library.Availability.OFFLINE -> "not reachable"; com.rasha.omni.library.Availability.ACCOUNT -> "sign in again"; else -> "checking" }),
-                        maxLines = 1, style = OmniType.Label.copy(fontSize = 12.sp, color = if (state == com.rasha.omni.library.Availability.PLAYABLE) OmniColor.Text2 else OmniColor.Warning))
+        val rel = remember(title, ui.titles) { related(title, ui.titles) }
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 56.dp, end = 48.dp, top = 64.dp, bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            item {
+                Column(Modifier.widthIn(max = 580.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(title.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = if (title.title.length < 22) CineType.Hero.copy(fontSize = 44.sp) else CineType.Hero)
+                    MetaLine(title)
+                    s.notice?.let { Text(it, style = CineType.Body.copy(color = Cine.CrimsonHi)) }
+                    Text(title.overview.ifEmpty { "No description yet. This title has not been matched with a metadata provider; it will be when the server or this TV is online." },
+                        maxLines = 4, overflow = TextOverflow.Ellipsis, style = CineType.Body.copy(fontSize = 15.sp, lineHeight = 21.sp))
+                    if (title.positionMs > 0 && title.durationMs > 0 && !title.watched) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(Modifier.width(160.dp)) { ProgressBar(title.positionMs / title.durationMs.toFloat()) }
+                        Text("${PlayRules.clock(title.durationMs - title.positionMs)} left", style = CineType.Small)
+                    }
+                    val resume = PlayRules.resumeAt(title.positionMs, title.durationMs)
+                    val inList = title.id.text in saved
+                    Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        CineButton(if (resume != null) "Resume  ${PlayRules.clock(resume)}" else if (title.watched) "Watch Again" else "Play", { vm.playTitle(title, play) }, Modifier.focusRequester(fr), BtnKind.Primary, icon = "▶")
+                        if (resume != null) CineButton("From the Start", { vm.setWatched(title.copies.first(), false) { vm.playTitle(title, play) } }, icon = "↺")
+                        CineButton(if (inList) "In My List" else "My List", { vm.toggleList(title.id.text) }, icon = if (inList) "✓" else "+", iconColor = if (inList) Cine.Gold else null)
+                        CineButton(if (title.watched) "Unwatched" else "Watched", { title.copies.forEach { c -> vm.setWatched(c, !title.watched) } }, icon = if (title.watched) "○" else "✓")
+                    }
                 }
-                val resume = PlayRules.resumeAt(title.positionMs, title.durationMs)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 8.dp)) {
-                    PillButton(if (resume != null) "Resume from ${PlayRules.clock(resume)}" else if (title.watched) "Watch again" else "Play", { vm.playTitle(title, play) }, Modifier.focusRequester(fr), primary = true)
-                    PillButton(if (title.watched) "Mark as unwatched" else "Mark as watched", { title.copies.forEach { c -> vm.setWatched(c, !title.watched) } })
+            }
+            item { Sources(vm, title) }
+            if (rel.isNotEmpty()) item {
+                Column(Modifier.padding(top = 8.dp)) {
+                    Text("More Like This", style = CineType.Row)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(start = 4.dp, end = 30.dp, top = 12.dp, bottom = 4.dp)) {
+                        items(rel, key = { "rel" + it.id.text }) { r -> PosterCard(vm.lib, r, onClick = { vm.go(Screen.Title(r.id.text)) }, width = 100.dp, saved = r.id.text in saved) }
+                    }
                 }
-                msg?.let { Text(it, style = OmniType.Body.copy(fontSize = 14.sp, color = OmniColor.Warning)) }
             }
         }
-    }
+        vm.message.collectAsStateWithLifecycle().value?.let {
+            Text(it, Modifier.align(Alignment.BottomCenter).padding(bottom = 22.dp).background(Color(0xF0232327), RoundedCornerShape(10.dp)).padding(horizontal = 16.dp, vertical = 10.dp), style = CineType.Body.copy(color = Cine.Ivory))
+        }
     }
 }
 
+/** Where the film plays from: every copy, with whether its source answers right now. Honest, small, below the actions. */
+@Composable
+private fun Sources(vm: CinemaViewModel, title: Title) {
+    val ui by vm.ui.collectAsStateWithLifecycle()
+    val av by produceState<Map<Long, Availability>>(emptyMap(), title.id) { value = withContext(Dispatchers.IO) { vm.lib.availabilities() } }
+    Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("AVAILABLE FROM", style = CineType.Tag.copy(color = Cine.Ivory3))
+        title.copies.forEach { c ->
+            val state = av[c.sourceId]
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.size(7.dp).background(when (state) { Availability.PLAYABLE -> Color(0xFF6FCF8A); null -> Cine.Ivory3; else -> Cine.CrimsonHi }, CircleShape))
+                Text(sourceName(ui.kinds[c.sourceId]), style = CineType.Meta.copy(color = Cine.Ivory))
+                Text(if (ApiPath.isApi(c.path)) "server library" else c.path.substringAfterLast('/'), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 300.dp), style = CineType.Small)
+                Text(when (state) { Availability.PLAYABLE -> "ready"; Availability.OFFLINE -> "not reachable"; Availability.ACCOUNT -> "sign in again"; Availability.METADATA -> "no file"; null -> "checking…" }, style = CineType.Small)
+            }
+        }
+    }
+}
+
+/** A series: its backdrop and story, the episode to watch next as the main action, then every episode with its state. */
 @Composable
 fun ShowScreen(vm: CinemaViewModel, s: Screen.Show, play: (Entry) -> Unit) {
     val ui by vm.ui.collectAsStateWithLifecycle()
@@ -100,26 +150,42 @@ fun ShowScreen(vm: CinemaViewModel, s: Screen.Show, play: (Entry) -> Unit) {
     val next = eps.firstOrNull { it.resumeMs > 0 && !it.watched } ?: eps.firstOrNull { !it.watched } ?: eps.firstOrNull()
     val fr = remember { FocusRequester() }
     LaunchedEffect(next != null) { if (next != null) try { fr.requestFocus() } catch (x: Exception) { } }
-    OmniScreen {
-        Backdrop(vm.lib, show?.backdrop)
-        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(show?.title ?: "", style = OmniType.Heading.copy(fontSize = 30.sp))
-            Text(show?.overview.orEmpty(), maxLines = 3, style = OmniType.Body.copy(fontSize = 15.sp, color = OmniColor.Text2))
-            if (next != null) OmniCard(onClick = { play(next) }, modifier = Modifier.width(380.dp).focusRequester(fr)) {
-                val r = PlayRules.resumeAt(next.resumeMs, next.durationMs)
-                Text((if (r != null) "Resume" else if (next.watched) "Play again" else "Play") + "  S${next.season} E${next.number}", style = OmniType.Body.copy(fontSize = 18.sp))
-            }
-            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 6.dp, horizontal = 4.dp)) {
-                items(eps, key = { it.sourceId.toString() + it.path }) { e ->
-                    OmniCard(onClick = { play(e) }, modifier = Modifier.fillMaxWidth()) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("S${e.season} E${e.number}", Modifier.width(80.dp), style = OmniType.Label.copy(color = OmniColor.Text2))
-                            Text(e.title, Modifier.weight(1f), maxLines = 1, style = OmniType.Body.copy(fontSize = 17.sp))
-                            if (e.watched) Text("✓", style = OmniType.Label) else if (e.resumeMs > 0) Text(PlayRules.clock(e.resumeMs), style = OmniType.Label.copy(color = OmniColor.Text3))
-                        }
+    Box(Modifier.fillMaxSize().background(Cine.Bg)) {
+        HeroBackdrop(vm.lib, show?.backdrop)
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 56.dp, end = 48.dp, top = 64.dp, bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item {
+                Column(Modifier.widthIn(max = 580.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(show?.title ?: "", maxLines = 2, style = CineType.Hero)
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        show?.year?.let { Text(it.toString(), style = CineType.Meta) }
+                        Text("${eps.size} episodes", style = CineType.Meta)
+                        if (show != null && show.watched > 0) Text("${show.watched} watched", style = CineType.Meta)
+                    }
+                    Text(show?.overview.orEmpty(), maxLines = 3, overflow = TextOverflow.Ellipsis, style = CineType.Body.copy(fontSize = 15.sp))
+                    if (next != null) {
+                        val r = PlayRules.resumeAt(next.resumeMs, next.durationMs)
+                        CineButton((if (r != null) "Resume" else if (next.watched) "Play Again" else "Play") + "  S${next.season} E${next.number}", { play(next) }, Modifier.focusRequester(fr).padding(top = 4.dp), BtnKind.Primary, icon = "▶")
                     }
                 }
             }
+            item { Text("Episodes", Modifier.padding(top = 10.dp), style = CineType.Row) }
+            items(eps, key = { it.sourceId.toString() + it.path }) { e -> EpisodeRow(e) { play(e) } }
+        }
+    }
+}
+
+@Composable
+private fun EpisodeRow(e: Entry, onClick: () -> Unit) {
+    var focused by remember { mutableStateOf(false) }
+    Row(Modifier.widthIn(max = 720.dp).fillMaxWidth().onFocusChanged { focused = it.isFocused }.background(if (focused) Cine.Ivory else Color(0x14E8DCC8), RoundedCornerShape(8.dp))
+        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        val ink = if (focused) Cine.Ink else Cine.Ivory
+        Text("S${e.season} E${e.number}", Modifier.width(70.dp), style = CineType.Meta.copy(color = if (focused) Cine.Ink else Cine.Ivory3))
+        Text(e.title, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = CineType.Row.copy(fontSize = 14.sp, color = ink, fontWeight = FontWeight.Medium))
+        when {
+            e.watched -> Text("✓", style = CineType.Row.copy(color = if (focused) Cine.Ink else Cine.Gold))
+            e.resumeMs > 0 && e.durationMs > 0 -> Box(Modifier.width(60.dp)) { ProgressBar(e.resumeMs / e.durationMs.toFloat()) }
         }
     }
 }
