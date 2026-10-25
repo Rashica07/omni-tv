@@ -12,7 +12,7 @@ You are helping a person install OMNI TV on **their own** Android TV. Follow `IN
 ## Steps
 1. Check tools: `adb version`, `java -version` (17), Android SDK `build-tools/35.0.0` and `platforms/android-35`. If missing, tell the person what to install; do not guess paths.
 2. Pair with the TV (`INSTALL.md` section 1). `adb devices` must show `device`.
-3. `cd launcher && ./build.sh <jdk17> && TV=<ip>:5555 ./deploy.sh`; run `test/run.sh <jdk17>` first (expects `0 failed`).
+3. Run `launcher/test/run.sh <jdk17>` first (expects `0 failed`), then `cd android && ./gradlew :app:assembleRelease` and `TV=<ip>:5555 ../launcher/deploy.sh` (one APK has everything).
 4. Optional apps/server: sections 4-5 of `INSTALL.md`. After installing the server, test with `curl http://<server>:8765/api/v1/health`.
 5. Verify on the TV: Home opens, INFO opens the Control Center, Back returns. Report what you saw and what you could not check (HDMI picture, sound).
 6. If the TV is not a Vestel/MediaTek: expect differences (HDMI preview, key codes, memory). Run `launcher/docs/hdmi_cec_test.sh` only with the person's OK (it temporarily turns HDMI-CEC off and restores it).

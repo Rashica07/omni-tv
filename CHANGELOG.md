@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.2
+* **One app.** Cinema, Weather, the Server dashboard and the screensaver are now inside the OMNI launcher APK (about 2.5 MB), each in its own process that exits when you close it. Guide, Play, Control and Reference are removed. One install, one update, no extra icons; weather uses the one place you picked for Home; the Server screen reuses the server you paired in Cinema.
+* Settings has *Server* and *Screensaver* rows. Upgrade note: uninstall the old separate OMNI apps first (they use the same names as the built-in Cinema, so Android refuses to keep both); Cinema's local data (the server pairing) must be entered once again, films and positions on your server are kept.
+
 ## 1.0.0-rc.1
 * The assistant is a glass pill in the top navbar zone (drops in like a notification, the nav fades, the page stays visible); chips on a second row.
 * Remote buttons: one row per physical button; optional "use the buttons everywhere" (Accessibility service you turn on yourself, sees only assigned buttons).

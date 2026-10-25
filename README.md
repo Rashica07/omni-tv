@@ -29,17 +29,17 @@ Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-
 - **Universal search** across apps, channels, films, inputs and settings.
 - **HDMI inputs** with a live preview card that expands to full screen with sound, without leaving the launcher. *Brand-dependent*, see Status.
 - **Cinema**: a native player app for your own films. It reads a library from your home server, resumes where you stopped, and shares that position across devices.
-- **Weather, Server status, Guide, Play, Gallery (screensaver), Control, Reference**: small native apps in the same design language.
+- **Weather, Server status and the Screensaver** are built into the same app (each runs in its own process and exits when you close it): the weather screen, the home-server dashboard, and landscape photos when the TV is idle. No separate installs, no extra icons.
 - **`omniptvd`**: a home server in plain Python (standard library only) that scans a folder of films, matches posters and overviews through TMDB, streams the original files with byte ranges, and keeps watch positions.
 
 ## Status, honestly
 - Developed and tested on **one TV** (see [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) for what to expect elsewhere). Other TVs are untested. Key codes, memory and the HDMI tuner service differ per brand. **Testers and fixes are the most useful contribution.** Open an issue with your TV model and what happened.
 - The HDMI live preview relies on the TV maker's own input service; it works differently (or not at all) on other brands.
-- Measured on the reference TV: launcher APK about 0.65 MB; about 110 MB PSS on the Live TV page (our own budget was 85 MB, so there is still work to do); Live TV page 0% janky frames with p95 9.6 ms; Weather p95 15 to 16 ms. See `launcher/docs/perf/`. Stock Google TV was not measured side by side, so no comparison is claimed.
+- Measured on the reference TV: the single OMNI APK is about 2.5 MB (launcher + Cinema with its video player + Weather + Server + screensaver); about 110 MB PSS on the Live TV page (our own budget was 85 MB, so there is still work to do); Live TV page 0% janky frames with p95 9.6 ms; Weather p95 15 to 16 ms. See `launcher/docs/perf/`. Stock Google TV was not measured side by side, so no comparison is claimed.
 - **Not built yet**: a Premium profile with real blur and heavier animation for powerful TVs, a one-click slim-down tool, a first-run wizard. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Install
-**Easiest: download APKs from [Releases](../../releases)** and install with `adb install -r file.apk` (or a file-manager/Downloader app after enabling "unknown sources"). Start with `omni-launcher.apk`.
+**Easiest: download `omni.apk` from [Releases](../../releases)** (one file) and install it with `adb install -r omni.apk` (or a file-manager/Downloader app after enabling "unknown sources").
 
 **Build from source**: see [`INSTALL.md`](INSTALL.md). Prefer to have an AI assistant do it with you? Tell it: *"Clone this repository and follow `AGENTS.md`."*
 
@@ -57,7 +57,7 @@ No analytics, advertising, crash reporting or tracking code is included. The onl
 | `archive.org` | optional public-domain films in Cinema |
 | your own network only | OMNI server discovery (port 8765) and Chromecast discovery (mDNS); library, streaming and status from your own server (plain http, PIN protected, LAN only) |
 
-You can verify this yourself: `grep -rhoE "https?://[a-z0-9.-]+" launcher/src android/apps android/core | sort | uniq -c`.
+You can verify this yourself: `grep -rhoE "https?://[a-z0-9.-]+" android/app/src android/apps android/core | sort | uniq -c`.
 
 ## About the TMDB key in the release APKs
 The launcher's Watch tab and Cinema's own matching use TMDB. **The release APKs include the author's TMDB v3 key**, so posters work without setup. Anyone can extract a key from an APK, so it is shared, rate-limited and may be rotated; if posters stop appearing, build your own APK with your own free key (`tmdb.token`, see `INSTALL.md`). Cinema does not need a key at all when it reads a library from your own `omniptvd`, which does the matching.
@@ -68,8 +68,9 @@ Channel logos and any channel or stream list. This project does not host, relay,
 ## Repository map
 | Folder | What | Build |
 |---|---|---|
-| `launcher/` | OMNI TvOS launcher | Java Views, no Gradle, no libraries: `./build.sh` |
-| `android/` | Cinema, Weather, Server, Guide, Play, Gallery, Control, Reference and shared `core:*` modules | Kotlin + Jetpack Compose for TV, Gradle |
+| `android/app` | OMNI TvOS: the launcher (Java Views) and everything inside the one APK | Gradle: `./gradlew :app:assembleRelease` |
+| `android/apps`, `android/core` | Cinema, Weather, Server and the screensaver, plus shared modules; compiled into `android/app` | Kotlin + Jetpack Compose for TV |
+| `launcher/` | Launcher tests, design docs, benchmark and TV-driving scripts | `launcher/test/run.sh` |
 | `server/` | `omniptvd` home server (Python 3 stdlib, SQLite) | `server/deploy/install.sh` |
 | `docs/` | Roadmap and screenshots | |
 

@@ -8,28 +8,25 @@ Nothing on the TV is deleted. You can go back to your TV's own launcher at any t
 2. TV: *Settings > Device Preferences > Developer options*, turn on **USB debugging** and **Network debugging / ADB over network** (wording varies).
 3. Note the TV's IP address (*Settings > Network*). Computer: `adb connect <tv-ip>:5555`, then accept the prompt on the TV. `adb devices` must list it as `device`.
 
-## 2. Build and install the launcher
+## 2. Install OMNI
+**Easiest:** download `omni.apk` from the Releases page and run `adb install -r omni.apk`.
+
+**Build it yourself** (JDK 17, Android SDK with build-tools 35 and platform android-35):
 ```
-cd launcher
-./build.sh /path/to/jdk-17          # needs ANDROID_SDK_ROOT (build-tools 35, platform android-35); creates your own omni.keystore on first run: keep it
-TV=<tv-ip>:5555 ./deploy.sh
+cd android
+echo "<your tmdb key>" > tmdb.token                      # optional: film posters for the Watch tab (https://www.themoviedb.org/settings/api); never share an APK built with a key inside
+keytool -genkeypair -keystore omni.keystore -storepass android -keypass android -alias aura -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=OMNI"   # once: your own signing key, keep it (a new key cannot update an old install)
+export JAVA_HOME=/path/to/jdk-17 ANDROID_SDK_ROOT=/path/to/Sdk
+./gradlew :app:assembleRelease
+TV=<tv-ip>:5555 ../launcher/deploy.sh                    # installs app/build/outputs/apk/release/app-release.apk and AOT-compiles it
 ```
-Optional film posters: put your own TMDB key in `launcher/tmdb.token` before building (https://www.themoviedb.org/settings/api). Never share an APK built with a key inside.
+That one APK contains the launcher, Cinema (with its player), Weather, the Server dashboard and the screensaver.
 
 ## 3. Make OMNI the Home screen (optional, reversible)
 Press Home on the remote and pick OMNI as the default if Android asks. Some TVs force their own launcher; do not disable system packages unless you know the undo.
 
-## 4. Apps (Cinema, Weather, ...)
-```
-cd android
-# one-time: your own signing keys (the launcher's key is made by launcher/build.sh and is shared with Cinema so its signature permission means "an OMNI app")
-keytool -genkeypair -keystore omni-os.keystore -storepass omni-os-local -keypass omni-os-local -alias omni -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=OMNI"
-export JAVA_HOME=/path/to/jdk-17
-echo "<your tmdb key>" > tmdb.token      # optional; Cinema does not need it when it reads a server library
-./gradlew :apps:cinema:assembleRelease    # likewise :apps:weather, :apps:server, ...
-adb -s <tv-ip>:5555 install -r apps/cinema/build/outputs/apk/release/cinema-release.apk
-```
-See `android/docs/APPS.md` for what each app does.
+## 4. The screensaver
+OMNI > Settings > Screensaver downloads landscape photos. To use it as the TV's idle screen: TV Settings > Device Preferences > Screen saver > *OMNI Gallery* (or with adb: `settings put secure screensaver_components com.rasha.omni/com.rasha.omni.gallery.OmniDream`).
 
 ## 5. Your own film library (optional)
 On the computer that will keep the films (Linux; Python 3.9+):
@@ -45,6 +42,7 @@ Films are indexed from file names like `Heat (1995).mkv` or `Heat.1995.1080p.Blu
 ## Undo
 ```
 adb shell pm enable com.google.android.tvlauncher         # your TV's stock launcher, if you disabled it
-adb uninstall com.rasha.omni                               # remove OMNI
+adb uninstall com.rasha.omni                               # remove OMNI (Cinema, Weather, Server and the screensaver go with it)
+adb shell settings put secure screensaver_components com.google.android.backdrop/.Backdrop   # if you had chosen the OMNI screensaver
 sudo systemctl disable --now omniptvd                      # remove the server (server/deploy/uninstall.sh removes its files)
 ```

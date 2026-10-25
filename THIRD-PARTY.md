@@ -1,7 +1,7 @@
 # Third-party material
 
-* **Geist** font (`launcher/assets/Geist.ttf`): SIL Open Font License 1.1, (c) Vercel. https://github.com/vercel/geist-font
-* **Fallback wallpaper** (`launcher/assets/wallpaper-fallback.jpg`): CC0 1.0, Wikimedia Commons (from Unsplash); details in `wallpaper-fallback.json`.
+* **Geist** font (`android/app/src/main/assets/Geist.ttf`): SIL Open Font License 1.1, (c) Vercel. https://github.com/vercel/geist-font
+* **Fallback wallpaper** (`android/app/src/main/assets/wallpaper-fallback.jpg`): CC0 1.0, Wikimedia Commons (from Unsplash); details in `wallpaper-fallback.json`.
 * **TMDB**: film metadata and artwork come from The Movie Database API. "This product uses the TMDB API but is not endorsed or certified by TMDB."
   You must use your own TMDB key (`tmdb.token`, never committed). Artwork is fetched at run time from TMDB's image host, not shipped.
 * **Channel logos and the channel catalogue are NOT included.** Logos are trademarks of their owners; `launcher/tools/fetch_logos.py` can fetch logos

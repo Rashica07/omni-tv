@@ -10,5 +10,5 @@ local.properties
 .idea/
 __pycache__/
 # third-party trademarks and private reference screenshots stay on your own machine
-launcher/assets/logos/
+android/app/src/main/assets/logos/
 launcher/docs/design/references/*/*.{jpg,jpeg,png,webp,gif}

@@ -4,7 +4,7 @@ A lightweight, ad-free, black-and-white Android TV launcher. Native Java Views, 
 Vestel / MediaTek Android 11 TV (1280x720 @ 60 Hz, ~930 MB RAM), so it is deliberately small (~0.2 MB APK).
 
 ## Build, test, install
-    ./build.sh <jdk-home>        # javac + d8 + aapt2 + apksigner -> omni.apk (JDK 17; not installed system-wide)
+    cd ../android && ./gradlew :app:assembleRelease   # one APK: launcher + Cinema + Weather + Server + screensaver
     test/run.sh <jdk-home>       # JVM unit tests for the pure logic (geometry, springs, ordering, app filter)
     ./deploy.sh [host:port]      # install, AOT-compile (avoids slow first-run JIT), launch Home
     python3 -I docs/regress.py   # on-device regression suite (drives the TV with key events, asserts on state logs)

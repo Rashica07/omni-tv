@@ -13,7 +13,7 @@ do not publish the APK. Nothing is invented: a channel without a downloadable lo
 import concurrent.futures as cf, io, json, os, re, sys, unicodedata, urllib.request
 from PIL import Image
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "android", "app", "src", "main")
 OUT = os.path.join(ROOT, "assets", "logos")
 API = "https://iptv-org.github.io/api/"
 UA = "Mozilla/5.0 (OMNI-TV logo fetch; personal use)"
