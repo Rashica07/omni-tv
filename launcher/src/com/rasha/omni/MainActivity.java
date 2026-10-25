@@ -173,6 +173,13 @@ public class MainActivity extends Activity implements Host {
     // ------------------------------------------------------------ Control Center
 
     private ControlCenter cc;
+    private Welcome welcome;
+    private Assistant assistant;
+    private DeviceWatch devices;
+    private KeyMap keyMap;
+    private boolean capturingKey;
+    private volatile List<Inputs.Entry> assistInputs = new ArrayList<>();
+    private String pendingQuery;
 
     private String weatherLine() {
         Weather.Place pl = Weather.place(this);
@@ -200,6 +207,7 @@ public class MainActivity extends Activity implements Host {
             }
             @Override public void run(String id) {
                 switch (id) {
+                    case "mic": closeControl(MainActivity.this::openAssistant); break;
                     case "search": closeControl(MainActivity.this::openUniversalSearch); break;
                     case "tv": closeControl(() -> { nav.select(3, true); selectTab(3); }); break;
                     case "weather": closeControl(MainActivity.this::openWeather); break;
@@ -217,6 +225,7 @@ public class MainActivity extends Activity implements Host {
                 if (a != null) a.run();
             }
         });
+        if (devices != null) cc.setSound(devices.soundOutput());
         cc.show(ambient);
         OmniLog.state("control=open");
         final ControlCenter shown = cc;
@@ -232,6 +241,8 @@ public class MainActivity extends Activity implements Host {
     private SearchOverlay search;
 
     /** One search across apps, TV channels, films (from OMNI Cinema), inputs and settings. The list is gathered off the main thread, then the overlay opens. */
+    void openUniversalSearch(String query) { pendingQuery = query; openUniversalSearch(); }
+
     void openUniversalSearch() {
         if (sheet != null || cc != null || search != null) return;
         flash("Searching OMNI", "Gathering apps, channels, films and inputs");
@@ -288,6 +299,7 @@ public class MainActivity extends Activity implements Host {
             @Override public void onOpen(SearchHit h) { endSearch(before); openHit(h); }
             @Override public void onClose() { endSearch(before); }
         });
+        if (pendingQuery != null) { search.setQuery(pendingQuery); pendingQuery = null; }
         search.show(ambient);
         OmniLog.state("search=open items=" + hits.size());
     }
@@ -382,6 +394,225 @@ public class MainActivity extends Activity implements Host {
         try { android.media.tv.TvInputManager m = (android.media.tv.TvInputManager) getSystemService(Context.TV_INPUT_SERVICE); if (m != null && inputCb != null) m.unregisterCallback(inputCb); } catch (RuntimeException ignored) { }
     }
 
+    /** A device change: in OMNI it is the usual banner; over another app (casting brings the receiver forward) it is a small overlay notice. */
+    private void deviceEvent(String[] e) {
+        if (e == null) return;
+        if (HdmiOverlay.launcherResumed) banner.flash(Banner.MODE_DONE, e[0], e[1]);
+        else OverlayToast.show(this, e[0], e[1]);
+        if (cc != null && devices != null) cc.setSound(devices.soundOutput());
+    }
+
+    // ------------------------------------------------------------ remote buttons
+
+    private KeyMap keyMap() {
+        if (keyMap == null) keyMap = new KeyMap(getSharedPreferences("omni", MODE_PRIVATE).getString("keymap", null));
+        return keyMap;
+    }
+
+    private void saveKeyMap() { getSharedPreferences("omni", MODE_PRIVATE).edit().putString("keymap", keyMap().serialize()).apply(); }
+
+    private void runKeyAction(String act) {
+        OmniLog.state("keymap run=" + act);
+        switch (act) {
+            case "control": openControlCenter(); break;
+            case "assistant": openAssistant(); break;
+            case "search": openUniversalSearch(); break;
+            case "home": nav.select(0, true); selectTab(0); break;
+            case "tv": nav.select(3, true); selectTab(3); break;
+            case "settings": nav.select(4, true); selectTab(4); break;
+            case "weather": openWeather(); break;
+            case "cinema": if (!CinemaBridge.open(this, "omni-cinema://home")) flash("Can't open OMNI Cinema", "It is not installed"); break;
+            default:
+                if (act.startsWith("app:")) {
+                    AppRepo.App a = repo.get(act.substring(4));
+                    if (a == null) { flash("That app is not installed", ""); break; }
+                    repo.launched(a.pkg, "button");
+                    try { startActivity(Intent.makeMainActivity(a.cn).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)); } catch (Exception ex) { flash("Can't open " + a.label, ""); }
+                }
+        }
+    }
+
+    private static String keyLabel(int key) { return KeyMap.buttonName(key, key >= 10000 ? null : KeyEvent.keyCodeToString(key)); }
+
+    /** Settings > Remote buttons: what each button does, change one, add one, back to the defaults. */
+    @Override public void openRemoteButtons() {
+        List<String> labels = new ArrayList<>();
+        List<Runnable> acts = new ArrayList<>();
+        for (java.util.Map.Entry<Integer, String> en : keyMap().all().entrySet()) {
+            final int key = en.getKey();
+            labels.add(keyLabel(key) + "  \u2192  " + KeyMap.actionName(en.getValue()));
+            acts.add(() -> closeSheet(() -> chooseAction(key)));
+        }
+        labels.add("Add a button");
+        acts.add(() -> closeSheet(() -> { capturingKey = true; banner.show(Banner.MODE_MOVE, "Press a button on your remote", "Any button except arrows, OK, Back, Home, volume and power"); }));
+        labels.add("Back to the defaults");
+        acts.add(() -> closeSheet(() -> { keyMap = new KeyMap(null); saveKeyMap(); flash("Remote buttons reset", "INFO opens the Control Center, the mic the assistant"); }));
+        showSheet("Remote buttons", "What each button does while you are in OMNI.", labels, acts);
+    }
+
+    private void captured(KeyEvent e) {
+        int key = KeyMap.keyOf(e.getKeyCode(), e.getScanCode());
+        if (e.getKeyCode() == KeyEvent.KEYCODE_BACK) { capturingKey = false; banner.hide(); return; }
+        if (KeyMap.reserved(key)) { banner.show(Banner.MODE_MOVE, "That button always does its usual job", "Try a colour button, INFO, Menu or a number"); return; }
+        capturingKey = false;
+        banner.hide();
+        OmniLog.state("keymap captured=" + key);
+        chooseAction(key);
+    }
+
+    private void chooseAction(final int key) {
+        List<String> labels = new ArrayList<>();
+        List<Runnable> acts = new ArrayList<>();
+        for (int i = 0; i < KeyMap.ACTIONS.length; i++) {
+            final String a = KeyMap.ACTIONS[i];
+            labels.add(KeyMap.ACTION_NAMES[i] + (a.equals(keyMap().get(key)) ? "  \u2713" : ""));
+            acts.add(() -> closeSheet(() -> { keyMap().set(key, a); saveKeyMap(); flash(keyLabel(key) + " now opens " + KeyMap.actionName(a), "Change it in Settings > Remote buttons"); }));
+        }
+        labels.add("Nothing (its usual job)");
+        acts.add(() -> closeSheet(() -> { keyMap().set(key, "none"); saveKeyMap(); flash(keyLabel(key) + " is back to normal", ""); }));
+        showSheet(keyLabel(key), "Choose what this button does in OMNI.", labels, acts);
+    }
+
+    // ------------------------------------------------------------ assistant
+
+    @Override public void openAssistant() {
+        if (assistant != null || welcome != null) return;
+        if (cc != null || sheet != null || search != null) return;
+        new Thread(() -> { try { assistInputs = Inputs.query(this); } catch (RuntimeException ignored) { } }, "assist-inputs").start();
+        final View before = getCurrentFocus();
+        setFocusBlocked(true);
+        assistant = new Assistant(this, ambient, new Assistant.Actions() {
+            @Override public List<String> apps() { List<String> l = new ArrayList<>(); for (AppRepo.App a : repo.alphabetical()) l.add(a.label); return l; }
+            @Override public List<String> inputs() { List<String> l = new ArrayList<>(); for (Inputs.Entry e : assistInputs) l.add(e.displayName()); return l; }
+            @Override public boolean canAsk() { return askIntent("x") != null; }
+            @Override public boolean micAllowed() { return checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED; }
+            @Override public void run(Intents.Action a) { runIntent(a); }
+            @Override public void closed() {
+                assistant = null;
+                setFocusBlocked(false);
+                if (before != null && before.isAttachedToWindow()) before.requestFocus();
+            }
+        });
+        assistant.show(ambient);
+        OmniLog.state("assistant=open");
+    }
+
+    /** The TV's own assistant with the words already in it (Google app / Gemini), or null when this TV has none. */
+    private Intent askIntent(String q) {
+        Intent[] tries = {
+                new Intent(Intent.ACTION_WEB_SEARCH).putExtra(android.app.SearchManager.QUERY, q),
+                new Intent("android.search.action.GLOBAL_SEARCH").putExtra(android.app.SearchManager.QUERY, q),
+                new Intent(Intent.ACTION_ASSIST).putExtra(android.app.SearchManager.QUERY, q)};
+        for (Intent i : tries) {
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            android.content.ComponentName cn = i.resolveActivity(getPackageManager());
+            if (cn != null && !getPackageName().equals(cn.getPackageName()) && !cn.getPackageName().contains("stubs")) return i;     // a framework stub only says "not available"
+        }
+        return null;
+    }
+
+    private void runIntent(Intents.Action a) {
+        android.media.AudioManager am = (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
+        int max = am == null ? 100 : am.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
+        switch (a.kind) {
+            case Intents.OPEN_APP:
+                for (AppRepo.App app : repo.alphabetical()) if (app.label.equals(a.arg)) {
+                    repo.launched(app.pkg, "assistant");
+                    try { startActivity(Intent.makeMainActivity(app.cn).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)); }
+                    catch (Exception e) { flash("Can't open " + app.label, "It did not start"); }
+                    return;
+                }
+                flash("Can't find " + a.arg, "It may have been uninstalled");
+                return;
+            case Intents.INPUT:
+                for (Inputs.Entry e : assistInputs) if (e.displayName().equals(a.arg)) {
+                    if (e.hdmi && e.state == android.media.tv.TvInputManager.INPUT_STATE_CONNECTED) HdmiViewerActivity.open(this, e);
+                    else if (e.hdmi) flash(e.displayName() + " has no signal", "Switch the device on first");
+                    else openSettingsOrInput(e);
+                    return;
+                }
+                return;
+            case Intents.VOLUME_UP: case Intents.VOLUME_DOWN:
+                if (am != null) { am.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, ControlRows.volumeStep(am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC), max, a.kind == Intents.VOLUME_UP ? 1 : -1), 0); flash("Volume " + ControlRows.volumePercent(am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC), max) + "%", ""); }
+                return;
+            case Intents.VOLUME_SET:
+                if (am != null) { am.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, Math.round(max * a.number / 100f), 0); flash("Volume " + a.number + "%", ""); }
+                return;
+            case Intents.MUTE:
+                if (am != null) { boolean m = am.isStreamMute(android.media.AudioManager.STREAM_MUSIC); am.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, m ? android.media.AudioManager.ADJUST_UNMUTE : android.media.AudioManager.ADJUST_MUTE, 0); flash(m ? "Sound on" : "Muted", ""); }
+                return;
+            case Intents.WEATHER: openWeather(); return;
+            case Intents.HOME: nav.select(0, true); selectTab(0); return;
+            case Intents.SETTINGS: nav.select(4, true); selectTab(4); return;
+            case Intents.CONTROL: ui.postDelayed(this::openControlCenter, 350); return;
+            case Intents.PLAY: case Intents.SEARCH: { final String q = a.arg; ui.postDelayed(() -> openUniversalSearch(q), 350); return; }
+            case Intents.ASK: {
+                Intent i = askIntent(a.arg);
+                if (i == null) { flash("No assistant on this TV", "Try a TV command like \u201copen YouTube\u201d"); return; }
+                try { startActivity(i); } catch (Exception e) { flash("The assistant did not start", ""); }
+                return;
+            }
+            default:
+        }
+    }
+
+    // ------------------------------------------------------------ welcome & setup
+
+    @Override public void openWelcome() {
+        if (welcome != null) return;
+        if (cc != null) { afterSheet = null; cc.dismiss(); }
+        if (sheet != null) { afterSheet = null; sheet.dismiss(); }
+        final android.content.SharedPreferences sp = getSharedPreferences("omni", MODE_PRIVATE);
+        setPagesVisible(false);
+        welcome = new Welcome(this, ambient, sp.getInt("setup_step", 0), new Welcome.Actions() {
+            @Override public boolean isHome() {
+                android.content.pm.ResolveInfo ri = getPackageManager().resolveActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+                return ri != null && ri.activityInfo != null && getPackageName().equals(ri.activityInfo.packageName);
+            }
+            @Override public void chooseHome() {
+                try { startActivity(new Intent(Settings.ACTION_HOME_SETTINGS)); }
+                catch (Exception e) { flash("This TV has no Home chooser", "Press Home and pick OMNI when the TV asks"); }
+            }
+            @Override public String server() { String b = PtvServer.base(MainActivity.this); return b == null ? null : b.replaceFirst("^https?://", ""); }
+            @Override public void findServer() { ServerScan.find(MainActivity.this, list -> ui.post(() -> { if (welcome != null) welcome.setScan(false, list); })); }
+            @Override public void useServer(String hostPort) { PtvServer.setBase(MainActivity.this, hostPort); serverChecked = false; checkServer(true); }
+            @Override public String weather() { return Weather.place(MainActivity.this) == null ? null : weatherLine(); }
+            @Override public void pickWeather() { openWeather(); }
+            @Override public boolean listings() { return WatchNext.granted(MainActivity.this); }
+            @Override public void askListings() { requestPermissions(new String[]{WatchNext.PERMISSION}, 7); }
+            @Override public boolean overlay() { return Settings.canDrawOverlays(MainActivity.this); }
+            @Override public void askOverlay() {
+                try { startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))); }
+                catch (Exception e) { flash("This TV hides that setting", "It can be allowed with adb: appops set " + getPackageName() + " SYSTEM_ALERT_WINDOW allow"); }
+            }
+            @Override public boolean mic() { return checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED; }
+            @Override public void askMic() { requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, 8); }
+            @Override public boolean sessions() { return DeviceWatch.sessionsAllowed(MainActivity.this); }
+            @Override public void askSessions() {
+                try { startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)); }
+                catch (Exception e) { flash("This TV hides that setting", "It can be allowed with adb: cmd notification allow_listener " + DeviceWatch.listener(MainActivity.this).flattenToString()); }
+            }
+            @Override public void finished(boolean completed, int step) {
+                sp.edit().putBoolean("setup_done", true).putInt("setup_step", completed ? 0 : step).apply();
+                OmniLog.state("welcome closed completed=" + completed + " step=" + step);
+                welcome = null;
+                setPagesVisible(true);
+                ui.post(() -> { if (cur >= 0 && pages[cur] != null) pages[cur].focusFirst(); });
+            }
+        });
+        welcome.show(ambient);
+    }
+
+    /** The pages, navigation and clock step aside while the welcome card is up, so the glass sits on the photograph alone. */
+    private void setPagesVisible(boolean v) {
+        int vis = v ? View.VISIBLE : View.INVISIBLE;
+        pageHost.setVisibility(vis);
+        nav.setVisibility(vis);
+        status.setVisibility(vis);
+        if (hintView != null) hintView.setVisibility(vis);
+        setFocusBlocked(!v);
+    }
+
     private void closeControl(Runnable after) {
         afterSheet = after;
         if (cc != null) cc.dismiss();
@@ -429,7 +660,11 @@ public class MainActivity extends Activity implements Host {
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         if (OmniLog.flag("OmniKeys") && e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) OmniLog.state("key code=" + e.getKeyCode() + " " + KeyEvent.keyCodeToString(e.getKeyCode()) + " scan=" + e.getScanCode());
-        if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0 && ControlCenter.isInfo(e) && cc == null && sheet == null && search == null) { openControlCenter(); return true; }
+        if (capturingKey && e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) { captured(e); return true; }
+        if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0 && cc == null && sheet == null && search == null && welcome == null && assistant == null) {
+            String act = keyMap().get(KeyMap.keyOf(e.getKeyCode(), e.getScanCode()));
+            if (act != null) { runKeyAction(act); return true; }                 // INFO -> Control Center and the mic -> assistant are defaults of the same map
+        }
         if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0 && OmniLog.latency()) probeLatency(e);
         return super.dispatchKeyEvent(e);
     }
@@ -601,7 +836,7 @@ public class MainActivity extends Activity implements Host {
         tmdb = new Tmdb(this);
         buildUi();
         // an app tile with focus keeps the wallpaper crisp (and lit in the app's colour); anywhere else it sits at 70% blur
-        getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> ambient.setSharp(newF instanceof ShelfStack));
+        getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> ambient.setSharp(newF instanceof ShelfStack || newF instanceof Welcome.Card));   // the welcome card sits on the crisp photograph
         wallpaper = new Wallpaper(this, ambient);
         wallpaper.apply();                                             // off the UI thread; the ground is near-black until it fades in
         ui.postDelayed(() -> wallpaper.refreshIfDue(false), 6000);     // the network never delays startup
@@ -609,6 +844,8 @@ public class MainActivity extends Activity implements Host {
         net.start(() -> ui.post(() -> { pushStatus(); netEvent(); }));
         netWasOnline = net.transport != NetKind.NONE && net.validated ? Boolean.TRUE : (net.transport == NetKind.NONE ? Boolean.FALSE : null);      // an unvalidated link at start is unknown, not news
         watchInputs();
+        devices = new DeviceWatch(this, e -> ui.post(() -> deviceEvent(e)));
+        devices.start();
         pushStatus();
         refreshWeather(false);
         if (PtvServer.base(this) != null) checkServer(false);
@@ -619,6 +856,7 @@ public class MainActivity extends Activity implements Host {
         pages[4] = new SettingsPage(this);
         selectTab(0);
         rescan();
+        if (!getSharedPreferences("omni", MODE_PRIVATE).getBoolean("setup_done", false)) ui.postDelayed(this::openWelcome, 700);     // first run
     }
 
     /** Asks for READ_TV_LISTINGS once (a runtime permission); declining is respected and never nagged. */
@@ -632,8 +870,9 @@ public class MainActivity extends Activity implements Host {
 
     @Override public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
         super.onRequestPermissionsResult(code, perms, res);
-        OmniLog.state("permission watchnext=" + (res.length > 0 && res[0] == android.content.pm.PackageManager.PERMISSION_GRANTED));
+        OmniLog.state("permission " + (perms.length > 0 ? perms[0] : "?") + "=" + (res.length > 0 && res[0] == android.content.pm.PackageManager.PERMISSION_GRANTED));
         refreshAll(null, null);
+        if (welcome != null) welcome.refresh();
     }
 
     @Override protected void onStart() {
@@ -649,6 +888,7 @@ public class MainActivity extends Activity implements Host {
     @Override protected void onDestroy() {
         super.onDestroy();
         if (net != null) net.stop();
+        if (devices != null) devices.stop();
         unwatchInputs();
     }
 
@@ -663,6 +903,8 @@ public class MainActivity extends Activity implements Host {
         super.onResume();
         HdmiOverlay.launcherResumed = true;
         if (cur >= 0 && pages[cur] != null) pages[cur].onResume();
+        if (welcome != null) welcome.refresh();                       // back from a system screen the setup opened
+        if (devices != null) devices.watchSessions();                 // notification access may have just been allowed
         if (wallpaper != null) wallpaper.apply();                      // a new schedule slot while we were away
         if (ambient != null) ambient.boost(false);                     // the bloom relaxes when OMNI is back
         if (launched) {
@@ -681,6 +923,8 @@ public class MainActivity extends Activity implements Host {
         if (intent.getBooleanExtra(HdmiOverlay.EXTRA_KEEP, false)) return;      // the HDMI preview bringing OMNI back in front: stay exactly where you were
         if (OmniLog.flag("OmniDebugOpen") && "weather".equals(intent.getStringExtra("open"))) { openWeather(); return; }
         if (OmniLog.flag("OmniDebugOpen") && intent.getStringExtra("server") != null) { PtvServer.setBase(this, intent.getStringExtra("server")); serverChecked = false; checkServer(true); return; }   // developer setup only
+        if (OmniLog.flag("OmniDebugOpen") && "welcome".equals(intent.getStringExtra("open"))) { getSharedPreferences("omni", MODE_PRIVATE).edit().putInt("setup_step", intent.getIntExtra("step", 0)).apply(); openWelcome(); return; }
+        if (OmniLog.flag("OmniDebugOpen") && "assistant".equals(intent.getStringExtra("open"))) { openAssistant(); String said = intent.getStringExtra("say"); if (said != null && assistant != null) assistant.postDelayed(() -> { if (assistant != null) assistant.debugSay(said); }, 900); return; }
         if (OmniLog.flag("OmniDebugOpen") && "control".equals(intent.getStringExtra("open"))) { openControlCenter(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "search".equals(intent.getStringExtra("open"))) { openUniversalSearch(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "wallpaper".equals(intent.getStringExtra("open"))) { nav.select(4, false); selectTab(4); ui.postDelayed(() -> ((SettingsPage) pages[4]).openWallpaperMenu(), 700); return; }   // developer profiling only
@@ -707,11 +951,12 @@ public class MainActivity extends Activity implements Host {
      */
     /** Menu opens the Control Center wherever no page used the key itself (the channel grid keeps Menu for its own options). */
     @Override public boolean onKeyDown(int code, KeyEvent e) {
-        if (code == KeyEvent.KEYCODE_MENU && e.getRepeatCount() == 0 && cc == null && sheet == null) { openControlCenter(); return true; }
+        if (code == KeyEvent.KEYCODE_MENU && e.getRepeatCount() == 0 && cc == null && sheet == null && welcome == null && assistant == null) { openControlCenter(); return true; }
         return super.onKeyDown(code, e);
     }
 
     @Override public void onBackPressed() {
+        if (welcome != null || assistant != null) return;              // the welcome card and the assistant handle Back themselves
         if (cc != null) { cc.dismiss(); return; }
         if (sheet != null) { closeSheet(null); return; }
         if (status.isFocused()) { OmniLog.state("back to=nav"); focusNav(); return; }

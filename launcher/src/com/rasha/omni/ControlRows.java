@@ -49,4 +49,14 @@ final class ControlRows {
 
     /** The text of one input row: its name and what the TV says about it. */
     static String inputState(boolean signal, boolean standby) { return signal ? "Signal" : standby ? "Standby" : "Nothing connected"; }
+
+    /** The Control Center's "Sound" row: where sound plays now. Preference follows Android's own routing: Bluetooth, then HDMI ARC/eARC, USB, headphones, else the TV. types/names are parallel arrays. */
+    static String soundOutput(int[] types, String[] names) {
+        int[] order = {EventRules.A_BT_A2DP, EventRules.A_HDMI_EARC, EventRules.A_HDMI_ARC, EventRules.A_USB_HEADSET, EventRules.A_USB_DEVICE, EventRules.A_WIRED_HEADPHONES, EventRules.A_WIRED_HEADSET};
+        for (int want : order) for (int i = 0; i < types.length; i++) if (types[i] == want) {
+            String kind = EventRules.audioKind(want), n = names[i] == null ? "" : names[i].trim();
+            return n.isEmpty() || n.equalsIgnoreCase(kind) ? kind : n + " (" + kind + ")";
+        }
+        return "TV speakers";
+    }
 }

@@ -7,13 +7,21 @@ Launcher, Control Center, universal search, native apps and a tiny home server f
 
 Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-bit, about 900 MB RAM, 720p) so that it stays smooth on hardware most launchers give up on.
 
-| Settings | Weather |
+![Welcome to OMNI UI](docs/screenshots/welcome.jpg)
+
+| Control Center (press INFO) | First-run setup |
 |---|---|
+| ![Control Center](docs/screenshots/control-center.jpg) | ![Setup](docs/screenshots/setup.jpg) |
+| **Settings** | **Weather** |
 | ![Settings](docs/screenshots/settings.jpg) | ![Weather](docs/screenshots/weather.jpg) |
 | **Cinema**, playing from your own server | **Title page** (public-domain film) |
 | ![Cinema](docs/screenshots/cinema-home.jpg) | ![Title](docs/screenshots/cinema-title.jpg) |
 
 ## What you get
+- **Welcome & setup**: a liquid-glass *WELCOME TO OMNI UI* first run over your wallpaper, then Home, a live remote check, OMNI server discovery on your network, weather place and permissions. Run it again any time from Settings.
+- **Assistant**: the mic/search button or the Control Center's Assistant button. Say or type TV commands in English, Italian or Albanian (*open YouTube*, *PlayStation*, *volume 30*, *weather*, *play His Girl Friday*); anything else is handed to your TV's own Google assistant / Gemini. Voice needs the TV's Google app; without it you type.
+- **Device notices**: speakers and soundbars (Bluetooth, HDMI ARC/eARC, USB), game controllers, keyboards, new Chromecasts on your network, and casting to this TV, shown even over other apps.
+- **Remote buttons**: choose what INFO, the colour keys and other buttons do in OMNI.
 - **Launcher**: Home, Watch, Apps, Live TV, Settings. Spring motion, one flat glass look, custom-drawn views instead of heavy layouts.
 - **Control Center** on the right side, opened with the remote's **INFO** key: volume, HDMI inputs, server status, weather, network, shortcuts. Everything is done in place.
 - **Universal search** across apps, channels, films, inputs and settings.
@@ -23,7 +31,7 @@ Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-
 - **`omniptvd`**: a home server in plain Python (standard library only) that scans a folder of films, matches posters and overviews through TMDB, streams the original files with byte ranges, and keeps watch positions.
 
 ## Status, honestly
-- Developed and tested on **one TV**. Other TVs are untested. Key codes, memory and the HDMI tuner service differ per brand. **Testers and fixes are the most useful contribution.** Open an issue with your TV model and what happened.
+- Developed and tested on **one TV** (see [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) for what to expect elsewhere). Other TVs are untested. Key codes, memory and the HDMI tuner service differ per brand. **Testers and fixes are the most useful contribution.** Open an issue with your TV model and what happened.
 - The HDMI live preview relies on the TV maker's own input service; it works differently (or not at all) on other brands.
 - Measured on the reference TV: launcher APK about 0.65 MB; about 110 MB PSS on the Live TV page (our own budget was 85 MB, so there is still work to do); Live TV page 0% janky frames with p95 9.6 ms; Weather p95 15 to 16 ms. See `launcher/docs/perf/`. Stock Google TV was not measured side by side, so no comparison is claimed.
 - **Not built yet**: a Premium profile with real blur and heavier animation for powerful TVs, a one-click slim-down tool, a first-run wizard. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
@@ -42,10 +50,10 @@ No analytics, advertising, crash reporting or tracking code is included. The onl
 |---|---|
 | `api.themoviedb.org`, `image.tmdb.org` | film metadata and posters (TMDB) |
 | `api.open-meteo.com` | weather |
-| `www.bing.com` | the daily wallpaper |
+| `www.bing.com` | the daily wallpaper (Settings > Wallpaper can switch to Wikimedia Commons) |
 | `commons.wikimedia.org`, `upload.wikimedia.org` | Gallery screensaver landscapes |
 | `archive.org` | optional public-domain films in Cinema |
-| your own server on your LAN | library, streaming, status (plain http, PIN protected, LAN only) |
+| your own network only | OMNI server discovery (port 8765) and Chromecast discovery (mDNS); library, streaming and status from your own server (plain http, PIN protected, LAN only) |
 
 You can verify this yourself: `grep -rhoE "https?://[a-z0-9.-]+" launcher/src android/apps android/core | sort | uniq -c`.
 

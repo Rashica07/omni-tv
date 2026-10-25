@@ -54,6 +54,8 @@ final class SettingsPage extends Page {
         list.setOrientation(LinearLayout.VERTICAL);
         list.setClipChildren(false);
         list.addView(item("Control Center", "Status and shortcuts", false, host::openControlCenter));
+        list.addView(item("Welcome & setup", "Run the setup again", false, host::openWelcome));
+        list.addView(item("Remote buttons", "INFO, colour keys, mic", false, host::openRemoteButtons));
         for (int i = 0; i < NAMES.length; i++) {
             final String action = ACTIONS[i];
             list.addView(item(NAMES[i], DESC[i], false, () -> openSetting(action)));

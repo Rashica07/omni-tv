@@ -6,6 +6,8 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-permission android:name="com.rasha.omni.permission.CINEMA" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
     <!-- Only for the HDMI preview experiment (docs/PLAN-NATIVE-OS.md); not granted unless the owner does it with appops. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
@@ -54,6 +56,11 @@
             android:exported="true"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
         <service android:name=".HdmiOverlay" android:exported="false" />
+        <!-- only so the system shares active media sessions (casting to this TV); it reads no notifications -->
+        <service android:name=".MediaListener" android:exported="true" android:label="OMNI casting notices"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
+        </service>
         <activity
             android:name=".HdmiViewerActivity"
             android:exported="false"
@@ -73,6 +80,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:windowSoftInputMode="adjustNothing"
             android:launchMode="singleTask"
             android:stateNotNeeded="true"
             android:resumeWhilePausing="true"

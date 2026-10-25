@@ -34,6 +34,15 @@ interface Host {
     boolean navHasFocus();
     /** Opens the Control Center drawer (status and shortcuts) over whatever is showing. */
     void openControlCenter();
+
+    /** The first-run welcome and setup, run again from Settings. */
+    void openWelcome();
+
+    /** The voice/typed assistant sheet. */
+    void openAssistant();
+
+    /** Settings > Remote buttons. */
+    void openRemoteButtons();
     /** Rebuilds every page, restoring focus to the given app in the given list when present. */
     void refreshAll(String focusPkg, String focusList);
 }

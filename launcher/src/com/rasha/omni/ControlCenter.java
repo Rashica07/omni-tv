@@ -38,8 +38,10 @@ final class ControlCenter extends FrameLayout {
         void closed();
     }
 
-    static final String[] SHORTCUTS = {"search", "tv", "weather", "play", "gear"};
-    static final String[] SHORTCUT_NAMES = {"Search", "TV & inputs", "Weather", "Cinema", "Settings"};
+    static final String[] SHORTCUTS = {"mic", "search", "tv", "weather", "play", "gear"};
+    static final String[] SHORTCUT_NAMES = {"Assistant", "Search", "TV & inputs", "Weather", "Cinema", "Settings"};
+
+    static String shortcutName(String id) { for (int i = 0; i < SHORTCUTS.length; i++) if (SHORTCUTS[i].equals(id)) return SHORTCUT_NAMES[i]; return id; }
 
     private static final float W = 440f, PAD = 16f, GAP = 8f, ROW = 52f, IN_ROW = 46f, ROUND = 58f, HEAD = 40f, LABEL = 24f;
 
@@ -56,6 +58,10 @@ final class ControlCenter extends FrameLayout {
     private final Panel panel;
     private final Spring in;
     private boolean closing, gone;
+
+    private String sound = "";
+
+    void setSound(String s) { sound = s == null ? "" : s; panel.invalidate(); }
 
     ControlCenter(Context c, Ambient amb, String network, String server, String weather, boolean cinema, Actions a) {
         super(c);
@@ -229,10 +235,10 @@ final class ControlCenter extends FrameLayout {
             return tmp;
         }
 
-        private int shortcutCount() { return cinema ? 5 : 4; }
+        private int shortcutCount() { return cinema ? 6 : 5; }
 
         private String shortcutAt(int i) {
-            String[] ids = cinema ? SHORTCUTS : new String[]{"search", "tv", "weather", "gear"};
+            String[] ids = cinema ? SHORTCUTS : new String[]{"mic", "search", "tv", "weather", "gear"};
             return ids[Math.max(0, Math.min(ids.length - 1, i))];
         }
 
@@ -290,7 +296,14 @@ final class ControlCenter extends FrameLayout {
             drawGlyph(c, icon, x + dp(12), cy, dp(1) * 0.75f, ic);
             x += dp(36);
             if (i.kind == K_VOLUME) {
-                c.drawText(muted ? "Muted" : "Volume", x, cy + dp(5), label);
+                if (sound.isEmpty()) c.drawText(muted ? "Muted" : "Volume", x, cy + dp(5), label);
+                else {                                                  // where the sound goes, under the word Volume
+                    c.drawText(muted ? "Muted" : "Volume", x, cy - dp(1), label);
+                    small.setColor(onWhite ? 0x99000000 : Theme.TEXT3);
+                    CharSequence so = TextUtils.ellipsize(sound, small, dp(74), TextUtils.TruncateAt.END);
+                    c.drawText(so, 0, so.length(), x, cy + dp(14), small);
+                    small.setColor(Theme.TEXT3);
+                }
                 int max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC), cur = muted ? 0 : audio.getStreamVolume(AudioManager.STREAM_MUSIC);
                 float tx0 = x + dp(78), tx1 = i.r.right - dp(60), ty = cy;
                 p.setStyle(Paint.Style.FILL);
@@ -330,7 +343,7 @@ final class ControlCenter extends FrameLayout {
                 p.setColor(0x24FFFFFF);
                 c.drawCircle(cx, i.r.top + dia / 2f, dia / 2f, p);
                 drawGlyph(c, shortcutAt(s), cx, i.r.top + dia / 2f, dp(1), 0xFFFFFFFF);
-                String nm = SHORTCUT_NAMES[cinema ? s : (s == 3 ? 4 : s)];
+                String nm = shortcutName(shortcutAt(s));
                 small.setTextAlign(Paint.Align.CENTER);
                 small.setColor(Theme.TEXT2);
                 c.drawText(nm, cx, i.r.top + dia + dp(14), small);
@@ -366,6 +379,7 @@ final class ControlCenter extends FrameLayout {
                 }
                 case "server": for (int s = 0; s < 2; s++) { float y = cy - 10 * k + s * 11 * k; r.set(cx - 11 * k, y, cx + 11 * k, y + 8.5f * k); c.drawRoundRect(r, 3 * k, 3 * k, ink); p.setStyle(Paint.Style.FILL); c.drawCircle(cx + 6 * k, y + 4.25f * k, 1.4f * k, p); } break;
                 case "weather": path.reset(); path.moveTo(cx - 10 * k, cy + 7 * k); r.set(cx - 13 * k, cy - 2 * k, cx - 4 * k, cy + 7 * k); path.arcTo(r, 90, 180, false); r.set(cx - 7 * k, cy - 10 * k, cx + 4 * k, cy + 1 * k); path.arcTo(r, 180, 200, false); r.set(cx + 1 * k, cy - 4 * k, cx + 12 * k, cy + 7 * k); path.arcTo(r, 270, 180, false); path.close(); c.drawPath(path, ink); break;
+                case "mic": r.set(cx - 5 * k, cy - 12 * k, cx + 5 * k, cy + 3 * k); c.drawRoundRect(r, 5 * k, 5 * k, ink); r.set(cx - 9 * k, cy - 6 * k, cx + 9 * k, cy + 7 * k); c.drawArc(r, 0, 180, false, ink); c.drawLine(cx, cy + 7 * k, cx, cy + 12 * k, ink); break;
                 case "play": r.set(cx - 12 * k, cy - 9 * k, cx + 12 * k, cy + 9 * k); c.drawRoundRect(r, 4 * k, 4 * k, ink); path.reset(); path.moveTo(cx - 3 * k, cy - 4 * k); path.lineTo(cx - 3 * k, cy + 4 * k); path.lineTo(cx + 4 * k, cy); path.close(); p.setStyle(Paint.Style.FILL); c.drawPath(path, p); break;
                 default: c.drawCircle(cx, cy, 4 * k, ink); for (int a = 0; a < 8; a++) { double t = a * Math.PI / 4; c.drawLine(cx + (float) Math.cos(t) * 8 * k, cy + (float) Math.sin(t) * 8 * k, cx + (float) Math.cos(t) * 12 * k, cy + (float) Math.sin(t) * 12 * k, ink); } c.drawCircle(cx, cy, 8 * k, ink);
             }
@@ -427,7 +441,7 @@ final class ControlCenter extends FrameLayout {
         @Override public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
             super.onInitializeAccessibilityNodeInfo(info);
             Item i = items.get(Math.min(focus, items.size() - 1));
-            info.setContentDescription(i.kind == K_ICONS ? SHORTCUT_NAMES[sub] : i.label + " " + i.value);
+            info.setContentDescription(i.kind == K_ICONS ? shortcutName(shortcutAt(sub)) : i.label + " " + i.value);
         }
     }
 }

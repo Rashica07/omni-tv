@@ -14,7 +14,7 @@ mkdir -p build/gen/com/rasha/omni
 printf 'package com.rasha.omni;\nfinal class Secrets { static final String TMDB = "%s"; }\n' "$TOKEN" > build/gen/com/rasha/omni/Secrets.java
 javac --release 8 -Xlint:-options -cp "$AJAR" -d build/classes $(find src build/gen -name '*.java')
 "$BT/d8" --release --min-api 23 --lib "$AJAR" --output build $(find build/classes -name '*.class')
-"$BT/aapt2" link -o build/base.apk -I "$AJAR" --manifest AndroidManifest.xml --min-sdk-version 23 --target-sdk-version 30 -A assets
+"$BT/aapt2" link -o build/base.apk -I "$AJAR" --manifest AndroidManifest.xml --min-sdk-version 23 --target-sdk-version 30 --version-code 100 --version-name 1.0.0-beta.1 -A assets
 python3 -I - <<'PY'
 import zipfile
 z = zipfile.ZipFile("build/base.apk", "a"); z.write("build/classes.dex", "classes.dex"); z.close()

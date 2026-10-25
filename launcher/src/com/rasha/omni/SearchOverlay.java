@@ -79,6 +79,13 @@ final class SearchOverlay extends View {
         refilter();
     }
 
+    /** Starts with words already typed (the assistant hands over a search this way). */
+    void setQuery(String q) {
+        query.setLength(0);
+        if (q != null) query.append(q.length() > 40 ? q.substring(0, 40) : q);
+        refilter();
+    }
+
     void show(ViewGroup root) {
         root.addView(this, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         post(() -> { requestFocus(); in.snap(0f); in.to(1f); });
