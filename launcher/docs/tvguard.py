@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Exit 0 if the TV is free to drive with key events, 3 if someone is using it.
 
-"In use" = an app other than OMNI is in front AND a media session is PLAYING. Scripts that inject keys, force-stop OMNI or bring it to the
+"In use" = an app other than OMNI is in front AND a media session is PLAYING, or the TV maker's own TV app (live TV / HDMI input) is in front. Scripts that inject keys, force-stop OMNI or bring it to the
 front must call this first (docs/capture*.sh, regress.py, bench.py, deploy.sh). A shared TV is not a test fixture.
 Override only when you know nobody is watching: TVGUARD=off.
 """
@@ -28,6 +28,11 @@ def state():
 if __name__ == "__main__":
     if os.environ.get("TVGUARD") == "off": sys.exit(0)
     fg, playing = state()
+    # live TV, the antenna and HDMI inputs are watched through the TV maker's own app and have no media session: that app in front means someone is watching
+    TV_APPS = ("com.mediatek.wwtv.tvcenter", "com.android.tv", "com.google.android.tvlauncher")
+    if fg in TV_APPS[:2]:
+        print(f"TV in use: the TV's own app ({fg}) is in front (live TV or an HDMI input). Not touching it.", file=sys.stderr)
+        sys.exit(3)
     if fg != "com.rasha.omni" and playing:
         print(f"TV in use: {fg} is in front and {', '.join(playing)} is playing. Not touching it.", file=sys.stderr)
         sys.exit(3)
