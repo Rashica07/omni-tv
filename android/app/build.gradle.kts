@@ -7,8 +7,8 @@ android {
         applicationId = "com.rasha.omni"
         minSdk = 26
         targetSdk = 30
-        versionCode = 102
-        versionName = "1.0.0-rc.2"
+        versionCode = 103
+        versionName = "1.0.0-rc.3"
         // TMDB credential: read from tmdb.token (git-ignored) at build time and compiled into the APK. Optional: without it Watch says so and Cinema still works from your own server.
         val tmdb = rootProject.file("tmdb.token").takeIf { it.exists() }?.readText()?.trim() ?: ""
         buildConfigField("String", "TMDB", "\"$tmdb\"")
