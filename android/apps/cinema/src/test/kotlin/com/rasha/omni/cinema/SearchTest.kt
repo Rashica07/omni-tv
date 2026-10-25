@@ -27,3 +27,17 @@ class SearchTest {
     }
     @Test fun runtimeText() { assertEquals("1h 32m", runtimeText(92)); assertEquals("45m", runtimeText(45)); assertEquals(null, runtimeText(0)) }
 }
+
+class RowsTest {
+    private fun t(id: Int, title: String, genres: String = "", pos: Long = 0, dur: Long = 0, kinds: Set<com.rasha.omni.library.SourceKind> = setOf(com.rasha.omni.library.SourceKind.Lan)) =
+        Title(MediaId.Movie(id), "movie", title, 2000, "", null, null, 0.0, "OMNI server", Availability.PLAYABLE, pos, dur, false, id.toLong(), id.toLong(), emptyList(), kinds, 0, genres)
+
+    @Test fun onlyRowsWithContentAndGenresSharedByTwo() {
+        val all = listOf(t(1, "A", "Comedy, Drama", pos = 600_000, dur = 6_000_000), t(2, "B", "Comedy"), t(3, "C", "Horror", kinds = setOf(com.rasha.omni.library.SourceKind.Archive)))
+        val rows = rowsFor(all, setOf(MediaId.Movie(2).text))
+        val ids = rows.map { it.id }
+        assertEquals(listOf("continue", "mylist", "recent", "network", "free", "g:Comedy"), ids)
+        assertTrue(rows.first().landscape)
+        assertTrue(rowsFor(emptyList(), emptySet()).isEmpty())
+    }
+}

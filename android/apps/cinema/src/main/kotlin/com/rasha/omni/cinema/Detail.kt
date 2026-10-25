@@ -84,14 +84,15 @@ fun TitleScreen(vm: CinemaViewModel, s: Screen.Title, play: (Entry) -> Unit) {
             return@Box
         }
         val rel = remember(title, ui.titles) { related(title, ui.titles) }
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 56.dp, end = 48.dp, top = 64.dp, bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            item {
+        // the page fits one screen: a fixed column, so focusing Play never scrolls the title away
+        Column(Modifier.fillMaxSize().padding(start = 56.dp, end = 48.dp, top = 56.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            run {
                 Column(Modifier.widthIn(max = 580.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(title.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = if (title.title.length < 22) CineType.Hero.copy(fontSize = 44.sp) else CineType.Hero)
                     MetaLine(title)
                     s.notice?.let { Text(it, style = CineType.Body.copy(color = Cine.CrimsonHi)) }
                     Text(title.overview.ifEmpty { "No description yet. This title has not been matched with a metadata provider; it will be when the server or this TV is online." },
-                        maxLines = 4, overflow = TextOverflow.Ellipsis, style = CineType.Body.copy(fontSize = 15.sp, lineHeight = 21.sp))
+                        maxLines = 3, overflow = TextOverflow.Ellipsis, style = CineType.Body.copy(fontSize = 15.sp, lineHeight = 21.sp))
                     if (title.positionMs > 0 && title.durationMs > 0 && !title.watched) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Box(Modifier.width(160.dp)) { ProgressBar(title.positionMs / title.durationMs.toFloat()) }
                         Text("${PlayRules.clock(title.durationMs - title.positionMs)} left", style = CineType.Small)
@@ -106,8 +107,8 @@ fun TitleScreen(vm: CinemaViewModel, s: Screen.Title, play: (Entry) -> Unit) {
                     }
                 }
             }
-            item { Sources(vm, title) }
-            if (rel.isNotEmpty()) item {
+            Sources(vm, title)
+            if (rel.isNotEmpty()) run {
                 Column(Modifier.padding(top = 8.dp)) {
                     Text("More Like This", style = CineType.Row)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(start = 4.dp, end = 30.dp, top = 12.dp, bottom = 4.dp)) {

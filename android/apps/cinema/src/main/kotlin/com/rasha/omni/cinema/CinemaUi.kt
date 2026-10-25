@@ -156,3 +156,14 @@ private fun NavItem(text: String, selected: Boolean, onClick: () -> Unit, modifi
         Box(Modifier.padding(top = 3.dp).width(18.dp).height(2.dp).background(if (selected && !focused) Cine.Crimson else Color.Transparent, RoundedCornerShape(1.dp)))
     }
 }
+
+/** A focusable surface for the Sources pages: a quiet raised tile that lifts on focus (lighter, with an ivory edge), so text of any colour stays readable. */
+@Composable
+fun CineCard(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    var focused by remember { mutableStateOf(false) }
+    val bg by animateColorAsState(if (focused) Cine.Surface else Cine.Raised, tween(120), label = "card")
+    val shape = RoundedCornerShape(10.dp)
+    Box(modifier.onFocusChanged { focused = it.isFocused }.graphicsLayer { val k = if (focused) 1.03f else 1f; scaleX = k; scaleY = k }
+        .then(if (focused) Modifier.border(2.dp, Cine.Ivory, shape) else Modifier)
+        .clip(shape).background(bg).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp)) { content() }
+}

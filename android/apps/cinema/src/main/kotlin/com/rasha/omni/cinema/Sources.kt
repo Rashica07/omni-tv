@@ -45,13 +45,13 @@ fun SourcesScreen(vm: CinemaViewModel) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     val scanning by vm.lib.scanning.collectAsStateWithLifecycle()
     val reports by vm.lib.reports.collectAsStateWithLifecycle()
-    OmniScreen {
+    OmniScreen(background = Cine.Bg) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Sources", style = OmniType.Heading.copy(fontSize = 26.sp))
+            Text("Sources", style = CineType.Page.copy(fontSize = 26.sp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OmniCard(onClick = { vm.go(Screen.AddServer) }, modifier = Modifier.width(250.dp)) { Text("Add OMNI server", style = OmniType.Body.copy(fontSize = 17.sp)) }
-                OmniCard(onClick = { vm.go(Screen.AddLocal) }, modifier = Modifier.width(250.dp)) { Text("Add USB / folder", style = OmniType.Body.copy(fontSize = 17.sp)) }
-                OmniCard(onClick = { vm.go(Screen.AddArchive) }, modifier = Modifier.width(250.dp)) { Text("Internet Archive films", style = OmniType.Body.copy(fontSize = 17.sp)) }
+                CineCard(onClick = { vm.go(Screen.AddServer) }, modifier = Modifier.width(250.dp)) { Text("Add OMNI server", style = OmniType.Body.copy(fontSize = 17.sp)) }
+                CineCard(onClick = { vm.go(Screen.AddLocal) }, modifier = Modifier.width(250.dp)) { Text("Add USB / folder", style = OmniType.Body.copy(fontSize = 17.sp)) }
+                CineCard(onClick = { vm.go(Screen.AddArchive) }, modifier = Modifier.width(250.dp)) { Text("Internet Archive films", style = OmniType.Body.copy(fontSize = 17.sp)) }
             }
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp, horizontal = 4.dp)) {
                 items(ui.sources, key = { it.id }) { r ->
@@ -60,18 +60,18 @@ fun SourcesScreen(vm: CinemaViewModel) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(r.name, style = OmniType.Body.copy(fontSize = 19.sp))
-                                Text(when (r.kind) { SourceKind.Lan -> "OMNI server  ·  ${r.base.removePrefix("http://")}"; SourceKind.Local -> "Folder  ·  ${r.base}"; SourceKind.Archive -> "Internet Archive (public domain / open licence)" }, style = OmniType.Label.copy(color = OmniColor.Text3))
+                                Text(when (r.kind) { SourceKind.Lan -> "OMNI server  ·  ${r.base.removePrefix("http://")}"; SourceKind.Local -> "Folder  ·  ${r.base}"; SourceKind.Archive -> "Internet Archive (public domain / open licence)" }, style = OmniType.Label.copy(color = Cine.Ivory3))
                             }
-                            if (r.kind != SourceKind.Archive) OmniCard(onClick = { vm.scan(r) }, modifier = Modifier.width(150.dp)) { Text(if (scanning.containsKey(r.id)) "Scanning…" else "Scan", style = OmniType.Body.copy(fontSize = 16.sp)) }
-                            OmniCard(onClick = { vm.remove(r) }, modifier = Modifier.width(150.dp)) { Text("Remove", style = OmniType.Body.copy(fontSize = 16.sp)) }
+                            if (r.kind != SourceKind.Archive) CineCard(onClick = { vm.scan(r) }, modifier = Modifier.width(150.dp)) { Text(if (scanning.containsKey(r.id)) "Scanning…" else "Scan", style = OmniType.Body.copy(fontSize = 16.sp)) }
+                            CineCard(onClick = { vm.remove(r) }, modifier = Modifier.width(150.dp)) { Text("Remove", style = OmniType.Body.copy(fontSize = 16.sp)) }
                         }
-                        scanning[r.id]?.let { Text(it, style = OmniType.Label.copy(color = OmniColor.Text2)) }
+                        scanning[r.id]?.let { Text(it, style = OmniType.Label.copy(color = Cine.Ivory2)) }
                         if (rep != null && !scanning.containsKey(r.id)) Text(rep.note ?: "Found ${rep.found} videos  ·  ${rep.added} new  ·  ${rep.removed} removed  ·  ${rep.scraped} identified  ·  ${rep.unmatched} not identified" +
-                            (rep.errors.firstOrNull()?.let { "  ·  $it" } ?: ""), style = OmniType.Label.copy(fontSize = 12.sp, color = OmniColor.Text2))
+                            (rep.errors.firstOrNull()?.let { "  ·  $it" } ?: ""), style = OmniType.Label.copy(fontSize = 12.sp, color = Cine.Ivory2))
                     }
                 }
             }
-            if (ui.sources.isEmpty()) Text("No sources yet.", style = OmniType.Body.copy(color = OmniColor.Text2))
+            if (ui.sources.isEmpty()) Text("No sources yet.", style = OmniType.Body.copy(color = Cine.Ivory2))
         }
     }
 }
@@ -85,19 +85,19 @@ fun AddServerScreen(vm: CinemaViewModel) {
     var pin by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) { found = Discovery.findServers(ctx); if (found!!.size == 1) chosen = found!![0] }
-    OmniScreen {
+    OmniScreen(background = Cine.Bg) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Add OMNI server", style = OmniType.Heading.copy(fontSize = 26.sp))
+            Text("Add OMNI server", style = CineType.Page.copy(fontSize = 26.sp))
             val f = found
-            if (f == null) Text("Looking for servers on your network…", style = OmniType.Body.copy(color = OmniColor.Text2))
+            if (f == null) Text("Looking for servers on your network…", style = OmniType.Body.copy(color = Cine.Ivory2))
             else if (f.isEmpty()) Text("No OMNI server answered on port 8765. Is omniptvd running on the laptop?", style = OmniType.Body.copy(color = OmniColor.Warning))
             else {
-                Text(if (chosen == null) "Choose a server" else "Server: $chosen", style = OmniType.Label.copy(color = OmniColor.Text2))
-                if (chosen == null) f.forEach { a -> OmniCard(onClick = { chosen = a }, modifier = Modifier.width(320.dp)) { Text(a, style = OmniType.Body.copy(fontSize = 18.sp)) } }
+                Text(if (chosen == null) "Choose a server" else "Server: $chosen", style = OmniType.Label.copy(color = Cine.Ivory2))
+                if (chosen == null) f.forEach { a -> CineCard(onClick = { chosen = a }, modifier = Modifier.width(320.dp)) { Text(a, style = OmniType.Body.copy(fontSize = 18.sp)) } }
                 else {
-                    Text("Enter the 8-digit PIN from /etc/omniptv/read.pin on the server", style = OmniType.Label.copy(color = OmniColor.Text2))
+                    Text("Enter the 8-digit PIN from /etc/omniptv/read.pin on the server", style = OmniType.Label.copy(color = Cine.Ivory2))
                     PinPad(pin) { pin = it; status = null }
-                    OmniCard(onClick = { status = "Connecting…"; vm.addServer("OMNI server", chosen!!, pin) { err -> status = err ?: "Connected"; if (err == null) { vm.back(); vm.scanAll() } } }, modifier = Modifier.width(260.dp)) { Text("Connect", style = OmniType.Body.copy(fontSize = 18.sp)) }
+                    CineCard(onClick = { status = "Connecting…"; vm.addServer("OMNI server", chosen!!, pin) { err -> status = err ?: "Connected"; if (err == null) { vm.back(); vm.scanAll() } } }, modifier = Modifier.width(260.dp)) { Text("Connect", style = OmniType.Body.copy(fontSize = 18.sp)) }
                 }
             }
             status?.let { Text(it, style = OmniType.Label.copy(color = if (it == "Connected") OmniColor.Positive else OmniColor.Warning)) }
@@ -114,11 +114,11 @@ fun AddLocalScreen(vm: CinemaViewModel) {
             File("/storage").listFiles()?.filter { it.name != "emulated" && it.name != "self" }?.forEach { add(it.path) }     // USB drives
         }.distinct().filter { File(it).isDirectory }
     }
-    OmniScreen {
+    OmniScreen(background = Cine.Bg) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Add USB drive or folder", style = OmniType.Heading.copy(fontSize = 26.sp))
-            Text("Folders found on this TV. Reading them needs the storage permission (Settings › Apps › OMNI Cinema).", style = OmniType.Label.copy(color = OmniColor.Text2))
-            roots.forEach { p -> OmniCard(onClick = { status = "Checking…"; vm.addLocal("", p) { err -> status = err ?: "Added"; if (err == null) { vm.back(); vm.scanAll() } } }, modifier = Modifier.width(520.dp)) { Text(p, style = OmniType.Body.copy(fontSize = 17.sp)) } }
+            Text("Add USB drive or folder", style = CineType.Page.copy(fontSize = 26.sp))
+            Text("Folders found on this TV. Reading them needs the storage permission (Settings › Apps › OMNI Cinema).", style = OmniType.Label.copy(color = Cine.Ivory2))
+            roots.forEach { p -> CineCard(onClick = { status = "Checking…"; vm.addLocal("", p) { err -> status = err ?: "Added"; if (err == null) { vm.back(); vm.scanAll() } } }, modifier = Modifier.width(520.dp)) { Text(p, style = OmniType.Body.copy(fontSize = 17.sp)) } }
             if (roots.isEmpty()) Text("No readable folders were found.", style = OmniType.Body.copy(color = OmniColor.Warning))
             status?.let { Text(it, style = OmniType.Label.copy(color = OmniColor.Warning)) }
         }
@@ -144,18 +144,18 @@ fun AddArchiveScreen(vm: CinemaViewModel) {
             } catch (e: Exception) { error = "Could not reach the Internet Archive."; emptyList() }
         }
     }
-    OmniScreen {
+    OmniScreen(background = Cine.Bg) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Internet Archive: public-domain films", style = OmniType.Heading.copy(fontSize = 26.sp))
-            Text("Only items the Archive marks as public domain are listed. OK adds a film to your library; it streams from archive.org.", style = OmniType.Label.copy(color = OmniColor.Text2))
+            Text("Internet Archive: public-domain films", style = CineType.Page.copy(fontSize = 26.sp))
+            Text("Only items the Archive marks as public domain are listed. OK adds a film to your library; it streams from archive.org.", style = OmniType.Label.copy(color = Cine.Ivory2))
             status?.let { Text(it, style = OmniType.Label.copy(color = OmniColor.Warning)) }
             error?.let { Text(it, style = OmniType.Body.copy(color = OmniColor.Warning)) }
-            if (rows == null) Text("Loading…", style = OmniType.Body.copy(color = OmniColor.Text2))
+            if (rows == null) Text("Loading…", style = OmniType.Body.copy(color = Cine.Ivory2))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 6.dp, horizontal = 4.dp)) {
                 items(rows.orEmpty(), key = { it.id }) { r ->
-                    OmniCard(onClick = { status = "Adding ${r.title}…"; vm.addArchive(r.id) { err -> status = err ?: "Added ${r.title}"; if (err == null) added += r.id } }, modifier = Modifier.fillMaxWidth()) {
+                    CineCard(onClick = { status = "Adding ${r.title}…"; vm.addArchive(r.id) { err -> status = err ?: "Added ${r.title}"; if (err == null) added += r.id } }, modifier = Modifier.fillMaxWidth()) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text(r.title, Modifier.weight(1f), maxLines = 1, style = OmniType.Body.copy(fontSize = 17.sp)); Text(r.year, style = OmniType.Label.copy(color = OmniColor.Text3)); if (r.id in added) Text("✓", style = OmniType.Label)
+                            Text(r.title, Modifier.weight(1f), maxLines = 1, style = OmniType.Body.copy(fontSize = 17.sp)); Text(r.year, style = OmniType.Label.copy(color = Cine.Ivory3)); if (r.id in added) Text("✓", style = OmniType.Label)
                         }
                     }
                 }

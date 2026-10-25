@@ -954,7 +954,7 @@ public class MainActivity extends Activity implements Host {
         if (OmniLog.flag("OmniDebugOpen") && "welcome".equals(intent.getStringExtra("open"))) { getSharedPreferences("omni", MODE_PRIVATE).edit().putInt("setup_step", intent.getIntExtra("step", 0)).apply(); openWelcome(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "assistant".equals(intent.getStringExtra("open"))) { openAssistant(); String said = intent.getStringExtra("say"); if (said != null && assistant != null) assistant.postDelayed(() -> { if (assistant != null) assistant.debugSay(said); }, 900); return; }
         if (OmniLog.flag("OmniDebugOpen") && "cinemaserver".equals(intent.getStringExtra("open"))) {                 // developer setup: pair Cinema with a server without typing the PIN on the remote
-            startActivity(new Intent().setClassName(this, "com.rasha.omni.cinema.CinemaActivity").putExtra("addLan", intent.getStringExtra("host")).putExtra("pin", intent.getStringExtra("pin")));
+            startActivity(new Intent().setClassName(this, "com.rasha.omni.cinema.CinemaActivity").putExtra("addLan", intent.getStringExtra("host")).putExtra("pin", intent.getStringExtra("pin")).putExtra("addArchive", intent.getStringExtra("archive")).putExtra("tab", intent.getStringExtra("tab")).putExtra("q", intent.getStringExtra("q")));
             return;
         }
         if (OmniLog.flag("OmniDebugOpen") && ("server".equals(intent.getStringExtra("open")) || "screensaver".equals(intent.getStringExtra("open")))) {      // developer check of the built-in screens

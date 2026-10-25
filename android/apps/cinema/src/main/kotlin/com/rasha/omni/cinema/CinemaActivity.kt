@@ -52,6 +52,8 @@ class CinemaActivity : ComponentActivity() {
         val lan = i.getStringExtra("addLan"); val pin = i.getStringExtra("pin")
         if (lan != null && pin != null) vm.addServer("OMNI server", lan, pin) { e -> android.util.Log.d("OmniCinema", "addLan $lan -> ${e ?: "ok"}"); if (e == null) vm.scanAll() }
         if (i.getBooleanExtra("scan", false)) vm.scanAll()
+        i.getStringExtra("tab")?.let { t -> Tab.values().firstOrNull { it.name.equals(t, true) }?.let { vm.start(null, null, null); vm.tab(it) } }
+        i.getStringExtra("q")?.let { vm.query.value = it }
     }
 
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); debugSetup(intent); vm.start(intent.getStringExtra(Router.R), intent.getStringExtra(Router.ID), intent.getStringExtra(Router.NOTICE)) }

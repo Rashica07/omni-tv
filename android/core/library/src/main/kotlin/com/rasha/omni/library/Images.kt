@@ -23,9 +23,9 @@ class Images(ctx: Context) {
      * A full-screen backdrop with the reading scrim baked in (dark on the left where the text sits, dark at the bottom where the shelves are), made once and cached.
      * Compositing it later is a single bitmap draw: no full-screen gradients are drawn per frame, which this TV's GPU cannot afford.
      */
-    suspend fun scrimmed(tmdbPath: String?, w: Int = 1280, h: Int = 720, ground: Int = 0xFF0A0A0A.toInt()): Bitmap? {
+    suspend fun scrimmed(tmdbPath: String?, w: Int = 1280, h: Int = 720, ground: Int = 0xFF0A0A0A.toInt(), bottomFrom: Float = 0.38f, bottomTo: Float = 1f, topTo: Float = 0f): Bitmap? {
         if (tmdbPath == null || !Regex("/[A-Za-z0-9_.-]{1,80}").matches(tmdbPath)) return null
-        val key = "$tmdbPath@$w#$ground"
+        val key = "$tmdbPath@$w#$ground/$bottomFrom/$bottomTo/$topTo"
         scrimMem.get(key)?.let { return it }
         val src = load("https://image.tmdb.org/t/p/w1280$tmdbPath", w) ?: return null
         return withContext(Dispatchers.Default) {
@@ -39,8 +39,12 @@ class Images(ctx: Context) {
             val p = android.graphics.Paint()
             p.shader = android.graphics.LinearGradient(0f, 0f, w * 0.72f, 0f, intArrayOf(g0 or 0xF0000000.toInt(), g0 or 0xB0000000.toInt(), g0), floatArrayOf(0f, 0.55f, 1f), android.graphics.Shader.TileMode.CLAMP)
             c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), p)
-            p.shader = android.graphics.LinearGradient(0f, h * 0.38f, 0f, h.toFloat(), g0, ground, android.graphics.Shader.TileMode.CLAMP)
+            p.shader = android.graphics.LinearGradient(0f, h * bottomFrom, 0f, h * bottomTo, g0, ground, android.graphics.Shader.TileMode.CLAMP)
             c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), p)
+            if (topTo > 0f) {                                            // a shade under a navigation bar, so it reads on bright pictures
+                p.shader = android.graphics.LinearGradient(0f, 0f, 0f, h * topTo, g0 or 0xC0000000.toInt(), g0, android.graphics.Shader.TileMode.CLAMP)
+                c.drawRect(0f, 0f, w.toFloat(), h * topTo, p)
+            }
             scrimMem.put(key, out)
             out
         }

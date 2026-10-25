@@ -90,7 +90,7 @@ fun PosterCard(lib: Library, t: Title, onClick: () -> Unit, modifier: Modifier =
             if (bmp != null) Image(bmp.asImageBitmap(), t.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             else NoArt(t.title, t.year, Modifier.fillMaxSize())
             if (offline) Box(Modifier.fillMaxSize().background(Color(0x8C141416)))
-            badgeOf(t)?.let { (txt, c) -> Tag(txt, c, Modifier.align(Alignment.TopStart).padding(6.dp)) }
+            badgeOf(t)?.takeIf { it.first != "FREE" }?.let { (txt, c) -> Tag(txt, c, Modifier.align(Alignment.TopStart).padding(6.dp)) }     // problems only; "free" is said on the title, not on every poster
             if (saved) Text("★", Modifier.align(Alignment.TopEnd).padding(6.dp), style = CineType.Row.copy(color = Cine.Gold, fontSize = 13.sp))
             if (t.watched) Tag("✓ WATCHED", Cine.Ivory2, Modifier.align(Alignment.BottomStart).padding(6.dp))
             else if (t.positionMs > 0 && t.durationMs > 0) ProgressBar(t.positionMs / t.durationMs.toFloat(), Modifier.align(Alignment.BottomStart))
@@ -132,8 +132,8 @@ fun ProgressBar(f: Float, modifier: Modifier = Modifier) {
  * is a single image draw. Changing titles cross-fades.
  */
 @Composable
-fun HeroBackdrop(lib: Library, path: String?) {
-    val bmp = produceState<android.graphics.Bitmap?>(null, path) { value = lib.images.scrimmed(path, ground = Cine.BG_ARGB) }.value
+fun HeroBackdrop(lib: Library, path: String?, deep: Boolean = true) {
+    val bmp = produceState<android.graphics.Bitmap?>(null, path, deep) { value = lib.images.scrimmed(path, ground = Cine.BG_ARGB, bottomFrom = if (deep) 0.3f else 0.38f, bottomTo = if (deep) 0.84f else 1f, topTo = 0.2f) }.value
     Crossfade(targetState = bmp, animationSpec = tween(420), label = "backdrop") { b ->
         if (b != null) Image(b.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) else Box(Modifier.fillMaxSize())
     }

@@ -36,6 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import kotlinx.coroutines.launch
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -81,11 +83,12 @@ fun MetaLine(t: Title, modifier: Modifier = Modifier) {
 
 /** The page frame every Cinema tab shares: charcoal ground, the backdrop of what you are looking at, the film's mood colour rising from the bottom, and the navigation on top. */
 @Composable
-fun CinemaPage(vm: CinemaViewModel, backdrop: String?, content: @Composable () -> Unit) {
+fun CinemaPage(vm: CinemaViewModel, backdrop: String?, dim: Boolean = false, content: @Composable () -> Unit) {
     val tab by vm.tab.collectAsStateWithLifecycle()
     val tint by animateColorAsState(rememberTint(vm.lib, backdrop), tween(700), label = "tint")
     Box(Modifier.fillMaxSize().background(Cine.Bg)) {
         HeroBackdrop(vm.lib, backdrop)
+        if (dim) Box(Modifier.fillMaxSize().background(Cine.Bg.copy(alpha = 0.72f)))                 // grids and search: the picture stays a mood, not a second subject
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.5f to Color.Transparent, 1f to tint.copy(alpha = 0.18f))))
         Column(Modifier.fillMaxSize().padding(start = 48.dp, end = 48.dp, top = 20.dp)) {
             TopNav(tab, onTab = { vm.tab(it) }, onSources = { vm.go(Screen.Sources) })
@@ -115,23 +118,24 @@ fun BrowseScreen(vm: CinemaViewModel, play: (Entry) -> Unit) {
 
 // ------------------------------------------------------------------------------------------------ Home
 
-private data class RowSpec(val id: String, val title: String, val items: List<Title>, val landscape: Boolean = false)
+internal data class RowSpec(val id: String, val title: String, val items: List<Title>, val landscape: Boolean = false)
 
 /** Rows that the library can really fill, in the order people use them. Genres only when at least two titles share one. */
-private fun rowsFor(titles: List<Title>, saved: Set<String>): List<RowSpec> = buildList {
-    fun add(r: RowSpec) { if (r.items.isNotEmpty()) add(r) }
-    add(RowSpec("continue", "Continue Watching", Catalogue.select("continue", titles), landscape = true))
-    add(RowSpec("mylist", "My List", titles.filter { it.id.text in saved }))
-    add(RowSpec("recent", "Recently Added", Catalogue.select("recent", titles)))
-    add(RowSpec("network", "From Your Server", Catalogue.select("network", titles)))
-    add(RowSpec("free", "Free to Watch", Catalogue.select("free", titles)))
-    add(RowSpec("device", "On This TV", Catalogue.select("device", titles)))
-    add(RowSpec("shows", "Series", titles.filter { it.kind == "show" }))
+internal fun rowsFor(titles: List<Title>, saved: Set<String>): List<RowSpec> = buildList {
+    fun row(r: RowSpec) { if (r.items.isNotEmpty()) add(r) }
+    row(RowSpec("continue", "Continue Watching", Catalogue.select("continue", titles), landscape = true))
+    row(RowSpec("mylist", "My List", titles.filter { it.id.text in saved }))
+    row(RowSpec("recent", "Recently Added", Catalogue.select("recent", titles)))
+    row(RowSpec("network", "From Your Server", Catalogue.select("network", titles)))
+    row(RowSpec("free", "Free to Watch", Catalogue.select("free", titles)))
+    row(RowSpec("device", "On This TV", Catalogue.select("device", titles)))
+    row(RowSpec("shows", "Series", titles.filter { it.kind == "show" }))
     titles.flatMap { t -> t.genres.split(", ").filter { it.isNotBlank() } }.groupingBy { it }.eachCount().entries
         .filter { it.value >= 2 }.sortedByDescending { it.value }.take(4)
-        .forEach { (g, _) -> add(RowSpec("g:$g", g, titles.filter { g in it.genres.split(", ") }.sortedByDescending { it.rating })) }
+        .forEach { (g, _) -> row(RowSpec("g:$g", g, titles.filter { g in it.genres.split(", ") }.sortedByDescending { it.rating })) }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun HomeTab(vm: CinemaViewModel, play: (Entry) -> Unit) {
     val ui by vm.ui.collectAsStateWithLifecycle()
@@ -150,15 +154,25 @@ private fun HomeTab(vm: CinemaViewModel, play: (Entry) -> Unit) {
     var placed by remember { mutableStateOf(false) }
     LaunchedEffect(h != null) { if (h != null && !placed && vm.lastFocus == null) { placed = true; delay(60); try { heroFocus.requestFocus() } catch (e: Exception) { } } }
 
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var inRows by remember { mutableStateOf(false) }
+    val heroH by androidx.compose.animation.core.animateDpAsState(if (inRows) 186.dp else 232.dp, tween(220), label = "heroH")
+    val actionsAlpha by androidx.compose.animation.core.animateFloatAsState(if (inRows) 0f else 1f, tween(180), label = "actions")
     CinemaPage(vm, h?.backdrop) {
-        Box(Modifier.height(232.dp).fillMaxWidth().padding(top = 18.dp, start = 4.dp)) {
+        Box(Modifier.height(heroH).fillMaxWidth().padding(top = 18.dp, start = 4.dp)) {
             if (h != null) AnimatedContent(targetState = h, transitionSpec = { fadeIn(tween(260)) togetherWith fadeOut(tween(160)) }, label = "hero") { t -> HeroText(t) }
             else if (ui.loaded) EmptyLibrary(vm)
             else Text("Loading your library…", style = CineType.Body)
-            if (h != null) HeroActions(vm, h, play, Modifier.align(Alignment.BottomStart).padding(bottom = 10.dp), heroFocus) { focused = null }
+            if (h != null) HeroActions(vm, h, play, Modifier.align(Alignment.BottomStart).padding(bottom = 10.dp).alpha(actionsAlpha), heroFocus) { focused = null }
         }
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            for (r in rows) item(key = r.id) {
+        val headroom = with(androidx.compose.ui.platform.LocalDensity.current) { 34.dp.toPx() }
+        val rowsSpec = remember(headroom) { PinToTop(headroom) }
+        val defaultSpec = androidx.compose.foundation.gestures.LocalBringIntoViewSpec.current
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides rowsSpec) {
+        LazyColumn(Modifier.fillMaxSize().onFocusChanged { inRows = it.hasFocus }, state = listState, contentPadding = PaddingValues(bottom = 300.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            rows.forEachIndexed { index, r -> item(key = r.id) {
+                androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides defaultSpec) {
                 Column {
                     Row(Modifier.padding(start = 4.dp, top = 6.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(r.title, style = CineType.Row)
@@ -172,9 +186,17 @@ private fun HomeTab(vm: CinemaViewModel, play: (Entry) -> Unit) {
                         }
                     }
                 }
-            }
+                }
+            } }
+        }
         }
     }
+}
+
+/** Television row behaviour: the focused row snaps to the top of the list (its heading just visible), instead of scrolling the least amount. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+private class PinToTop(private val headroom: Float) : androidx.compose.foundation.gestures.BringIntoViewSpec {
+    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float = offset - headroom
 }
 
 @Composable
@@ -229,10 +251,10 @@ private fun GridTab(vm: CinemaViewModel, tab: Tab) {
         }
     }
     var focused by remember { mutableStateOf<Title?>(null) }
-    CinemaPage(vm, (focused ?: list.firstOrNull())?.backdrop) {
+    CinemaPage(vm, (focused ?: list.firstOrNull())?.backdrop, dim = true) {
         Row(Modifier.padding(top = 18.dp, start = 4.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(tab.label, style = CineType.Page)
-            Text(if (list.size == 1) "1 title" else "${list.size} titles", Modifier.padding(bottom = 4.dp), style = CineType.Small)
+            if (list.isNotEmpty()) Text(if (list.size == 1) "1 title" else "${list.size} titles", Modifier.padding(bottom = 4.dp), style = CineType.Small)
         }
         if (base.size > 1) LazyRow(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
             items(genres) { g -> Chip(g, g == genre) { genre = g } }
@@ -297,7 +319,7 @@ private fun SearchTab(vm: CinemaViewModel) {
     var focused by remember { mutableStateOf<Title?>(null) }
     val firstKey = remember { FocusRequester() }
     LaunchedEffect(Unit) { delay(80); try { firstKey.requestFocus() } catch (e: Exception) { } }
-    CinemaPage(vm, focused?.backdrop) {
+    CinemaPage(vm, focused?.backdrop, dim = true) {
         Row(Modifier.fillMaxSize().padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
             Column(Modifier.width(276.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(Modifier.fillMaxWidth().background(Color(0x1FE8DCC8), RoundedCornerShape(10.dp)).padding(horizontal = 14.dp, vertical = 10.dp)) {
