@@ -12,8 +12,10 @@ Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-
 | Control Center (press INFO) | First-run setup |
 |---|---|
 | ![Control Center](docs/screenshots/control-center.jpg) | ![Setup](docs/screenshots/setup.jpg) |
-| **Settings** | **Weather** |
-| ![Settings](docs/screenshots/settings.jpg) | ![Weather](docs/screenshots/weather.jpg) |
+| **Assistant** (a pill that takes the navbar's place) | **Device notice** |
+| ![Assistant](docs/screenshots/assistant.jpg) | ![Notice](docs/screenshots/notice.jpg) |
+| **Remote buttons** | **Weather** |
+| ![Remote buttons](docs/screenshots/remote-buttons.jpg) | ![Weather](docs/screenshots/weather.jpg) |
 | **Cinema**, playing from your own server | **Title page** (public-domain film) |
 | ![Cinema](docs/screenshots/cinema-home.jpg) | ![Title](docs/screenshots/cinema-title.jpg) |
 

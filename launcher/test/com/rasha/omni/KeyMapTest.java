@@ -12,7 +12,7 @@ final class KeyMapTest {
         T.ok(!m.set(187, "rm -rf"), "unknown actions are refused");
         KeyMap back = new KeyMap(m.serialize());
         T.ok(back.all().equals(m.all()), "serialize round-trips");
-        T.ok(KeyMap.buttonName(183, "KEYCODE_PROG_RED").equals("Red") && KeyMap.buttonName(10358, null).equals("INFO") && KeyMap.buttonName(165, "KEYCODE_INFO").equals("Info") && KeyMap.buttonName(84, "KEYCODE_SEARCH").equals("Mic / Search"), "button names");
+        T.ok(KeyMap.buttonName(183, "KEYCODE_PROG_RED").equals("Red") && KeyMap.buttonName(10358, null).equals("INFO") && KeyMap.buttonName(165, "KEYCODE_INFO").equals("INFO") && KeyMap.buttonName(84, "KEYCODE_SEARCH").equals("Mic / Search"), "button names");
         T.ok(KeyMap.actionName("cinema").equals("OMNI Cinema") && KeyMap.actionName("app:YouTube").equals("Open YouTube") && KeyMap.actionName(null).equals("Nothing"), "action names");
     }
 }

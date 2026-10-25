@@ -439,10 +439,16 @@ public class MainActivity extends Activity implements Host {
     @Override public void openRemoteButtons() {
         List<String> labels = new ArrayList<>();
         List<Runnable> acts = new ArrayList<>();
+        java.util.LinkedHashMap<String, List<Integer>> groups = new java.util.LinkedHashMap<>();       // one physical button can arrive under two codes: one row for it
         for (java.util.Map.Entry<Integer, String> en : keyMap().all().entrySet()) {
-            final int key = en.getKey();
-            labels.add(keyLabel(key) + "  \u2192  " + KeyMap.actionName(en.getValue()));
-            acts.add(() -> closeSheet(() -> chooseAction(key)));
+            String l = keyLabel(en.getKey()) + "  \u2192  " + KeyMap.actionName(en.getValue());
+            if (!groups.containsKey(l)) groups.put(l, new ArrayList<>());
+            groups.get(l).add(en.getKey());
+        }
+        for (java.util.Map.Entry<String, List<Integer>> g : groups.entrySet()) {
+            final List<Integer> keys = g.getValue();
+            labels.add(g.getKey());
+            acts.add(() -> closeSheet(() -> chooseAction(keys)));
         }
         labels.add("Use the buttons everywhere: " + (KeyService.enabled(this) ? "On" : "Off"));
         acts.add(() -> closeSheet(() -> {
@@ -463,19 +469,20 @@ public class MainActivity extends Activity implements Host {
         capturingKey = false;
         banner.hide();
         OmniLog.state("keymap captured=" + key);
-        chooseAction(key);
+        chooseAction(java.util.Collections.singletonList(key));
     }
 
-    private void chooseAction(final int key) {
+    private void chooseAction(final List<Integer> keys) {
+        final int key = keys.get(0);
         List<String> labels = new ArrayList<>();
         List<Runnable> acts = new ArrayList<>();
         for (int i = 0; i < KeyMap.ACTIONS.length; i++) {
             final String a = KeyMap.ACTIONS[i];
             labels.add(KeyMap.ACTION_NAMES[i] + (a.equals(keyMap().get(key)) ? "  \u2713" : ""));
-            acts.add(() -> closeSheet(() -> { keyMap().set(key, a); saveKeyMap(); flash(keyLabel(key) + " now opens " + KeyMap.actionName(a), "Change it in Settings > Remote buttons"); }));
+            acts.add(() -> closeSheet(() -> { for (int k : keys) keyMap().set(k, a); saveKeyMap(); flash(keyLabel(key) + " now opens " + KeyMap.actionName(a), "Change it in Settings > Remote buttons"); }));
         }
         labels.add("Nothing (its usual job)");
-        acts.add(() -> closeSheet(() -> { keyMap().set(key, "none"); saveKeyMap(); flash(keyLabel(key) + " is back to normal", ""); }));
+        acts.add(() -> closeSheet(() -> { for (int k : keys) keyMap().set(k, "none"); saveKeyMap(); flash(keyLabel(key) + " is back to normal", ""); }));
         showSheet(keyLabel(key), "Choose what this button does in OMNI.", labels, acts);
     }
 
@@ -935,6 +942,8 @@ public class MainActivity extends Activity implements Host {
         if (OmniLog.flag("OmniDebugOpen") && intent.getStringExtra("server") != null) { PtvServer.setBase(this, intent.getStringExtra("server")); serverChecked = false; checkServer(true); return; }   // developer setup only
         if (OmniLog.flag("OmniDebugOpen") && "welcome".equals(intent.getStringExtra("open"))) { getSharedPreferences("omni", MODE_PRIVATE).edit().putInt("setup_step", intent.getIntExtra("step", 0)).apply(); openWelcome(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "assistant".equals(intent.getStringExtra("open"))) { openAssistant(); String said = intent.getStringExtra("say"); if (said != null && assistant != null) assistant.postDelayed(() -> { if (assistant != null) assistant.debugSay(said); }, 900); return; }
+        if (OmniLog.flag("OmniDebugOpen") && "remote".equals(intent.getStringExtra("open"))) { openRemoteButtons(); return; }
+        if (OmniLog.flag("OmniDebugOpen") && "notice".equals(intent.getStringExtra("open"))) { deviceEvent(EventRules.audio("JBL Bar", EventRules.A_BT_A2DP, true, false)); return; }       // developer check of the notice path
         if (OmniLog.flag("OmniDebugOpen") && "control".equals(intent.getStringExtra("open"))) { openControlCenter(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "search".equals(intent.getStringExtra("open"))) { openUniversalSearch(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "wallpaper".equals(intent.getStringExtra("open"))) { nav.select(4, false); selectTab(4); ui.postDelayed(() -> ((SettingsPage) pages[4]).openWallpaperMenu(), 700); return; }   // developer profiling only

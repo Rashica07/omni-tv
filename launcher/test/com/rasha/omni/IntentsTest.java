@@ -20,6 +20,8 @@ final class IntentsTest {
         T.ok(first("switch to hdmi 2").kind == Intents.INPUT && "HDMI 2".equals(first("switch to hdmi 2").arg) && "HDMI 2".equals(first("passa a hdmi 2").arg), "switch to an input");
         T.ok(first("open hdmi 1").kind == Intents.INPUT && "HDMI 1".equals(first("open hdmi 1").arg), "open an input");
         T.ok(first("antenna").kind == Intents.INPUT, "antenna is an input");
+        T.ok(Intents.parse("play his girl friday", java.util.Arrays.asList("Play", "YouTube"), INPUTS).get(0).kind == Intents.PLAY, "a sentence starting with an app's name is not that app");
+        T.ok(Intents.parse("youtube kids", java.util.Arrays.asList("YouTube"), INPUTS).get(0).kind == Intents.OPEN_APP, "a short extra word still opens the app");
         T.ok(first("play") == null || first("play").kind != Intents.INPUT, "a lone \"play\" never switches to the PlayStation");
         T.ok(first("playstation").kind == Intents.INPUT && first("netf").kind == Intents.OPEN_APP, "a long enough start still matches");
         T.ok(first("volume up").kind == Intents.VOLUME_UP && first("louder").kind == Intents.VOLUME_UP && first("alza il volume").kind == Intents.VOLUME_UP, "volume up in three ways");

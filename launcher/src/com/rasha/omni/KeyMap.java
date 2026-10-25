@@ -66,7 +66,7 @@ final class KeyMap {
 
     /** How a button is called on screen ("INFO", "Red", "Key 183"). Names come from Android's own key names. */
     static String buttonName(int key, String androidName) {
-        if (key == 10358) return "INFO";
+        if (key == 10358 || key == 165) return "INFO";
         if (key > 10000) return "Button " + (key - 10000);
         if (androidName == null || androidName.isEmpty()) return "Key " + key;
         String n = androidName.replace("KEYCODE_", "");

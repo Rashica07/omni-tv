@@ -121,7 +121,7 @@ final class Intents {
         String a = norm(said), b = norm(name), bc = b.replace(" ", ""), ac = a.replace(" ", "");
         if (a.isEmpty() || b.isEmpty()) return 0;
         if (a.equals(b) || ac.equals(bc)) return 100;
-        if ((bc.startsWith(ac) && ac.length() >= 3 && ac.length() * 2 >= bc.length()) || (ac.startsWith(bc) && bc.length() >= 4)) return 90;     // "play" is not enough for "PlayStation 5"
+        if ((bc.startsWith(ac) && ac.length() >= 3 && ac.length() * 2 >= bc.length()) || (ac.startsWith(bc) && bc.length() >= 4 && ac.length() <= bc.length() * 2)) return 90;     // "youtube kids" opens YouTube; a whole sentence that starts with "play" does not open an app called Play     // "play" is not enough for "PlayStation 5"
         for (String w : b.split(" ")) if (w.length() >= 3 && w.equals(a)) return 75;
         boolean all = true;
         for (String w : a.split(" ")) if (!(" " + b + " ").contains(" " + w + " ")) { all = false; break; }
