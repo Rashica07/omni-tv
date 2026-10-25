@@ -1,54 +1,70 @@
 # OMNI TV
 
-A custom, ad-free, black-and-white **TV operating-system layer for Android TV**: a launcher (Home, Watch, Apps, Live TV, Settings), a right-hand
-**Control Center** (press INFO), universal search, a live HDMI-input preview, and a small family of native apps (Cinema, Weather, Server, Guide, Play,
-Gallery, Control, Reference) plus an optional home-server (`omniptvd`) that indexes your own films and serves them to the TV.
+**A fast, ad-free, black-and-white operating-system layer for cheap Android TVs.**
+Launcher, Control Center, universal search, native apps and a tiny home server for your own films. Free, open source, no accounts, no ads, no paid tier.
 
-It was built and measured on one very weak TV (Vestel/MediaTek, Android 11, 32-bit ARMv7, ~900 MB RAM, 1280x720), so it is fast on cheap hardware by design.
-
-> **Honest status.** Developed and tested on **one TV**. Other TVs are untested; reports and fixes are welcome (see `CONTRIBUTING` below). The HDMI live preview
-> depends on the TV maker's TV-input service and behaves differently per brand. Nothing here replaces or removes your TV's own software: OMNI is an *extra*
-> launcher, and every system-level change is reversible (`INSTALL.md` lists the undo commands).
-
-## At a glance (measured on the reference TV, not marketing numbers)
-* **Footprint:** launcher APK about 0.65 MB; about 110 MB PSS on the Live TV page (our own budget was 85 MB, so there is still work to do). Stock Google TV was not measured side by side, so no comparison is claimed.
-* **Stack:** launcher in plain Java Views (no libraries); the apps are Kotlin + Jetpack Compose; the server is Python standard library.
-* **Smoothness:** Live TV page 0% janky frames, p95 9.6 ms; Weather median 12 ms, p95 15 to 16 ms (see `launcher/docs/perf/`).
+Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-bit, about 900 MB RAM, 720p) so that it stays smooth on hardware most launchers give up on.
 
 | Settings | Weather |
 |---|---|
 | ![Settings](docs/screenshots/settings.jpg) | ![Weather](docs/screenshots/weather.jpg) |
-| **Cinema** (public-domain films from the Internet Archive) | **Cinema title page** |
+| **Cinema**, playing from your own server | **Title page** (public-domain film) |
 | ![Cinema](docs/screenshots/cinema-home.jpg) | ![Title](docs/screenshots/cinema-title.jpg) |
 
-Screenshots of Home, the Control Center and Live TV are not included because they show third-party app icons and channel names; add your own.
+## What you get
+- **Launcher**: Home, Watch, Apps, Live TV, Settings. Spring motion, one flat glass look, custom-drawn views instead of heavy layouts.
+- **Control Center** on the right side, opened with the remote's **INFO** key: volume, HDMI inputs, server status, weather, network, shortcuts. Everything is done in place.
+- **Universal search** across apps, channels, films, inputs and settings.
+- **HDMI inputs** with a live preview card that expands to full screen with sound, without leaving the launcher. *Brand-dependent*, see Status.
+- **Cinema**: a native player app for your own films. It reads a library from your home server, resumes where you stopped, and shares that position across devices.
+- **Weather, Server status, Guide, Play, Gallery (screensaver), Control, Reference**: small native apps in the same design language.
+- **`omniptvd`**: a home server in plain Python (standard library only) that scans a folder of films, matches posters and overviews through TMDB, streams the original files with byte ranges, and keeps watch positions.
 
-## What is in this repository
-| Folder | What | Language / build |
+## Status, honestly
+- Developed and tested on **one TV**. Other TVs are untested. Key codes, memory and the HDMI tuner service differ per brand. **Testers and fixes are the most useful contribution.** Open an issue with your TV model and what happened.
+- The HDMI live preview relies on the TV maker's own input service; it works differently (or not at all) on other brands.
+- Measured on the reference TV: launcher APK about 0.65 MB; about 110 MB PSS on the Live TV page (our own budget was 85 MB, so there is still work to do); Live TV page 0% janky frames with p95 9.6 ms; Weather p95 15 to 16 ms. See `launcher/docs/perf/`. Stock Google TV was not measured side by side, so no comparison is claimed.
+- **Not built yet**: a Premium profile with real blur and heavier animation for powerful TVs, a one-click slim-down tool, a first-run wizard. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+## Install
+**Easiest: download APKs from [Releases](../../releases)** and install with `adb install -r file.apk` (or a file-manager/Downloader app after enabling "unknown sources"). Start with `omni-launcher.apk`.
+
+**Build from source**: see [`INSTALL.md`](INSTALL.md). Prefer to have an AI assistant do it with you? Tell it: *"Clone this repository and follow `AGENTS.md`."*
+
+OMNI is an *extra* launcher. It does not remove or disable your TV's own software, and every change is reversible; undo commands are in `INSTALL.md`.
+
+## Privacy: what the code talks to
+No analytics, advertising, crash reporting or tracking code is included. The only outside connections are:
+
+| Host | Why |
+|---|---|
+| `api.themoviedb.org`, `image.tmdb.org` | film metadata and posters (TMDB) |
+| `api.open-meteo.com` | weather |
+| `www.bing.com` | the daily wallpaper |
+| `commons.wikimedia.org`, `upload.wikimedia.org` | Gallery screensaver landscapes |
+| `archive.org` | optional public-domain films in Cinema |
+| your own server on your LAN | library, streaming, status (plain http, PIN protected, LAN only) |
+
+You can verify this yourself: `grep -rhoE "https?://[a-z0-9.-]+" launcher/src android/apps android/core | sort | uniq -c`.
+
+## About the TMDB key in the release APKs
+The launcher's Watch tab and Cinema's own matching use TMDB. **The release APKs include the author's TMDB v3 key**, so posters work without setup. Anyone can extract a key from an APK, so it is shared, rate-limited and may be rotated; if posters stop appearing, build your own APK with your own free key (`tmdb.token`, see `INSTALL.md`). Cinema does not need a key at all when it reads a library from your own `omniptvd`, which does the matching.
+
+## What is deliberately not included
+Channel logos and any channel or stream list. This project does not host, relay, advertise or unblock streams; you add only sources you are allowed to watch. See [`THIRD-PARTY.md`](THIRD-PARTY.md).
+
+## Repository map
+| Folder | What | Build |
 |---|---|---|
-| `launcher/` | The launcher itself (OMNI TvOS) | Java Views, no Gradle, no libraries. `./build.sh`, ~0.65 MB APK |
-| `android/` | Cinema, Weather, Server, Guide, Play, Gallery, Control, Reference + shared `core:*` modules | Kotlin + Jetpack Compose for TV, Gradle |
-| `server/` | `omniptvd`: personal media library + catalogue + health service for your home server | Python 3 standard library only, SQLite |
-| `docs/` | Roadmap, install guide for humans and for AI agents | |
+| `launcher/` | OMNI TvOS launcher | Java Views, no Gradle, no libraries: `./build.sh` |
+| `android/` | Cinema, Weather, Server, Guide, Play, Gallery, Control, Reference and shared `core:*` modules | Kotlin + Jetpack Compose for TV, Gradle |
+| `server/` | `omniptvd` home server (Python 3 stdlib, SQLite) | `server/deploy/install.sh` |
+| `docs/` | Roadmap and screenshots | |
 
-## Features (all working on the reference TV, verified there)
-* Launcher with springs-based motion, no per-frame blur (that is what the weak TV cannot afford), focus handling hardened after real-remote testing.
-* Control Center on the right (volume, inputs, server, weather, network, shortcuts), opened with the remote's INFO key.
-* Universal search over apps, channels, films, inputs and settings.
-* Live HDMI preview card that expands in place to full screen with sound, without leaving the launcher (brand-dependent, see status).
-* **Personal media library**: put films in a folder on a computer; the server scans them, matches posters/overviews through TMDB (you bring your own key), streams them with
-  byte ranges, and keeps one shared "continue watching" position across devices. Cinema on the TV plays them and syncs resume points.
-* Honest availability: items say whether their source is reachable; unplayable formats are reported, not hidden.
+Project rules learned the hard way (performance, focus, key lag on TVs) are in `launcher/CLAUDE.md`; they apply to humans too.
 
-## Quick start
-See [`INSTALL.md`](INSTALL.md). If you would rather have an AI assistant do it, tell it: *"Clone this repository and follow `AGENTS.md`."*
-
-## Not included on purpose
-Channel logos, a channel/stream catalogue, any TMDB credential, any signing key. See `THIRD-PARTY.md`. This project does not host, relay, bypass or advertise streams.
-
-## Planned
-See [`docs/ROADMAP.md`](docs/ROADMAP.md): device-class profiles (a **Lite** profile for weak TVs and a **Premium** profile with blur and heavier animation for powerful TVs),
-a reversible "slim down" tool, and broader TV compatibility testing. None of those exist yet.
+## Contributing
+Tests first: `launcher/test/run.sh <jdk17>` (3298 checks), `python3 -I server/server/tests/test_*.py`, `./gradlew :core:library:test` in `android/`. Please say what you actually ran on a real TV and what you could not check.
 
 ## License
-Apache License 2.0, see `LICENSE`; third-party material in `THIRD-PARTY.md`.
+Apache License 2.0, see [`LICENSE`](LICENSE). Third-party material is listed in [`THIRD-PARTY.md`](THIRD-PARTY.md). Trademarks belong to their owners.
