@@ -75,7 +75,7 @@ private fun Pairing(vm: ServerViewModel) {
     var pin by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) { found = Discovery.findServers(ctx); if (found!!.size == 1) chosen = found!![0] }
-    OmniScreen {
+    OmniScreen(background = androidx.compose.ui.graphics.Color(0xFF1A1A1D)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("OMNI Server", style = OmniType.Heading.copy(fontSize = 26.sp))
             val f = found

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.6
+* **OMNI Server redesigned** as a control center on the shared OMNI top bar: Overview (verdict first, four ring gauges, network, services), Resources (charts of real polled readings; no chart until there is enough data), Library (counts, folders, storage, **Scan library now**), Devices (devices that have synced watch progress) and a settings sheet with a confirmed *Forget this server*. Only what the backend provides is shown: no service start/stop (no such endpoint) and no "connected clients" (not tracked). Honest states: unreachable, not signed in, older server without a library, missing values shown as n/a.
+* Fix: a resolved temperature warning was listed as "Resolved:" with no text.
+
 ## 1.0.0-rc.5
 * **OMNI Weather redesigned.** The shared OMNI top bar (now one component for Cinema and Weather) with Today, Hourly and Week and small Refresh / Change city icons; the temperature as the primary element; an honest one-line outlook from the real hourly forecast; a quiet details row; a temperature curve with focusable hour cards; a seven-day list with range bars. The existing procedural sky is kept and tuned (brighter night, sun and moon moved clear of the text) with a lighter variant for low-memory TVs. Old data is labelled "Last known ... Not live." Unchanged: Open-Meteo, caching, the city list, OK to refresh, hold OK / Menu for cities. No alerts section: the data source has none.
 

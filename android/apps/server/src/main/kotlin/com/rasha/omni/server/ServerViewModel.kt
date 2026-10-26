@@ -11,12 +11,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-data class Sample(val atMs: Long, val load: Double, val tempC: Double?, val memUsed: Double)
+data class Sample(val atMs: Long, val load: Double, val tempC: Double?, val memUsed: Double, val rxBps: Long? = null, val txBps: Long? = null)
 
 data class ServerUi(
     val paired: Boolean = false, val address: String = "", val status: SysStatus? = null, val health: Health? = null, val alerts: List<Alert> = emptyList(),
     val history: List<Sample> = emptyList(), val lastOkMs: Long = 0, val error: String? = null, val latencyMs: Long = 0,
     val events: List<Event> = emptyList(), val reachable: Boolean = true,
+    /** Library and devices come from a different part of the server than /status: each can fail or be missing on its own, and says so. */
+    val library: LibraryInfo? = null, val libraryNote: String? = null, val libraryAtMs: Long = 0,
+    val devices: List<DeviceSeen>? = null, val scanMessage: String? = null,
 )
 
 class ServerViewModel(app: Application) : AndroidViewModel(app) {
@@ -39,6 +42,7 @@ class ServerViewModel(app: Application) : AndroidViewModel(app) {
     }
     val ui: StateFlow<ServerUi> = _ui.asStateFlow()
     private var loop: Job? = null
+    private var round = 0
 
     private fun loadEvents(): List<Event> = (prefs.getString("events", "") ?: "").lines().mapNotNull { l -> val p = l.split('|', limit = 3); if (p.size == 3) p[0].toLongOrNull()?.let { Event(it, p[2], p[1] == "1") } else null }
     private fun record(new: List<Event>) {
@@ -55,7 +59,11 @@ class ServerViewModel(app: Application) : AndroidViewModel(app) {
         stop()
         if (!_ui.value.paired) return
         loop = viewModelScope.launch {
-            while (isActive) { refresh(); delay(5000) }
+            while (isActive) {
+                refresh()
+                if (round++ % 3 == 0 || _ui.value.library?.scan?.scanning == true) refreshLibrary()          // 15 s normally, 5 s while a scan runs
+                delay(5000)
+            }
         }
     }
     fun stop() { loop?.cancel(); loop = null }
@@ -67,7 +75,7 @@ class ServerViewModel(app: Application) : AndroidViewModel(app) {
         try {
             val h = c.health(); val s = c.status()
             val now = System.currentTimeMillis()
-            val hist = (_ui.value.history + Sample(now, s.load1, s.tempC, s.memUsedFraction)).takeLast(60)
+            val hist = (_ui.value.history + Sample(now, s.load1, s.tempC, s.memUsedFraction, s.net?.rxBps, s.net?.txBps)).takeLast(120)
             val alerts = Alerts.from(s, h, now / 1000.0)
             _ui.value = _ui.value.copy(address = addr, status = s, health = h, alerts = alerts, history = hist, lastOkMs = now, error = null, latencyMs = now - t0, reachable = true)
             val snap = Snapshot(true, alerts.associate { it.key to it.text }); record(Events.diff(prevSnap, snap, now)); prevSnap = snap
@@ -79,6 +87,27 @@ class ServerViewModel(app: Application) : AndroidViewModel(app) {
             _ui.value = _ui.value.copy(error = "Cannot reach the server. Showing the last values.", reachable = false)
             val snap = Snapshot(false, emptyMap()); record(Events.diff(prevSnap, snap, System.currentTimeMillis())); prevSnap = snap
         }
+    }
+
+    /** The library and the devices that have synced, each failing on its own: a server without the library API is still a working server. */
+    suspend fun refreshLibrary() {
+        val addr = prefs.getString("addr", null) ?: return; val pin = prefs.getString("pin", null) ?: return
+        val c = ServerClient("http://$addr", pin)
+        val now = System.currentTimeMillis()
+        try { _ui.value = _ui.value.copy(library = c.library(), libraryNote = null, libraryAtMs = now) }
+        catch (e: NoLibraryApi) { _ui.value = _ui.value.copy(library = null, libraryNote = "This server is older and has no media library. Update it with \"sudo ./deploy/install.sh\".") }
+        catch (e: Unauthorized) { _ui.value = _ui.value.copy(libraryNote = "The server rejected the PIN.") }
+        catch (e: Exception) { _ui.value = _ui.value.copy(libraryNote = if (_ui.value.library != null) "Could not refresh the library; showing the last reading." else "Could not read the library.") }
+        try { _ui.value = _ui.value.copy(devices = c.devices()) } catch (e: Exception) { }
+    }
+
+    /** Starts a library scan on the server. The answer says whether one began or one was already running. */
+    suspend fun scanNow() {
+        val addr = prefs.getString("addr", null) ?: return; val pin = prefs.getString("pin", null) ?: return
+        _ui.value = _ui.value.copy(scanMessage = "Asking the server\u2026")
+        val msg = try { if (ServerClient("http://$addr", pin).scanNow()) "Scan started" else "A scan is already running" } catch (e: Exception) { "The server did not accept the request" }
+        _ui.value = _ui.value.copy(scanMessage = msg)
+        refreshLibrary()
     }
 
     /** Checks the PIN against the real server before saving it. Returns an error text or null. */
