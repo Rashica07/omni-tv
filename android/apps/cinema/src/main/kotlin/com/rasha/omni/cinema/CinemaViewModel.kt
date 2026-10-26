@@ -56,6 +56,10 @@ class CinemaViewModel(app: Application) : AndroidViewModel(app) {
         _myList.value = now
     }
 
+    /** What the page frame shows behind the tabs: the focused title's backdrop and whether it is dimmed (grids, search). Set by the tab on screen; the frame and its navigation bar live on, so focus stays on the tab you chose. */
+    val pageBackdrop = MutableStateFlow<String?>(null)
+    val pageDim = MutableStateFlow(false)
+
     /** Search text, kept while you move between results and a title page. */
     val query = MutableStateFlow("")
 

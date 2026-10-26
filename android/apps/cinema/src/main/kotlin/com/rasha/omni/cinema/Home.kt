@@ -83,17 +83,19 @@ fun MetaLine(t: Title, modifier: Modifier = Modifier) {
 
 /** The page frame every Cinema tab shares: charcoal ground, the backdrop of what you are looking at, the film's mood colour rising from the bottom, and the navigation on top. */
 @Composable
-fun CinemaPage(vm: CinemaViewModel, backdrop: String?, dim: Boolean = false, content: @Composable () -> Unit) {
+fun CinemaPage(vm: CinemaViewModel, content: @Composable () -> Unit) {
     val tab by vm.tab.collectAsStateWithLifecycle()
+    val backdrop by vm.pageBackdrop.collectAsStateWithLifecycle()
+    val dim by vm.pageDim.collectAsStateWithLifecycle()
     val tint by animateColorAsState(rememberTint(vm.lib, backdrop), tween(700), label = "tint")
     Box(Modifier.fillMaxSize().background(Cine.Bg)) {
         HeroBackdrop(vm.lib, backdrop)
         if (dim) Box(Modifier.fillMaxSize().background(Cine.Bg.copy(alpha = 0.72f)))                 // grids and search: the picture stays a mood, not a second subject
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.5f to Color.Transparent, 1f to tint.copy(alpha = 0.18f))))
-        Column(Modifier.fillMaxSize().padding(start = 48.dp, end = 48.dp, top = 20.dp)) {
+        Column(Modifier.fillMaxSize().padding(start = 64.dp, end = 64.dp, top = 30.dp)) {
             TopNav(tab, onTab = { vm.tab(it) }, onSources = { vm.go(Screen.Sources) })
             val scanning by vm.lib.scanning.collectAsStateWithLifecycle()
-            if (scanning.isNotEmpty()) Text(scanning.values.first(), Modifier.padding(start = 16.dp), style = CineType.Small)
+            if (scanning.isNotEmpty()) Text(scanning.values.first(), Modifier.padding(start = 4.dp, top = 4.dp), style = CineType.Small)
             content()
         }
         vm.message.collectAsStateWithLifecycle().value?.let {
@@ -103,16 +105,24 @@ fun CinemaPage(vm: CinemaViewModel, backdrop: String?, dim: Boolean = false, con
     }
 }
 
+/** A tab tells the frame what to show behind it. */
+@Composable
+fun PageArt(vm: CinemaViewModel, backdrop: String?, dim: Boolean) {
+    LaunchedEffect(backdrop, dim) { vm.pageBackdrop.value = backdrop; vm.pageDim.value = dim }
+}
+
 /** Browse: the five tabs share one page so the navigation stays put while the content changes. */
 @Composable
 fun BrowseScreen(vm: CinemaViewModel, play: (Entry) -> Unit) {
     val tab by vm.tab.collectAsStateWithLifecycle()
-    when (tab) {
-        Tab.Home -> HomeTab(vm, play)
-        Tab.Movies -> GridTab(vm, Tab.Movies)
-        Tab.Shows -> GridTab(vm, Tab.Shows)
-        Tab.MyList -> GridTab(vm, Tab.MyList)
-        Tab.Search -> SearchTab(vm)
+    CinemaPage(vm) {
+        when (tab) {
+            Tab.Home -> HomeTab(vm, play)
+            Tab.Movies -> GridTab(vm, Tab.Movies)
+            Tab.Shows -> GridTab(vm, Tab.Shows)
+            Tab.MyList -> GridTab(vm, Tab.MyList)
+            Tab.Search -> SearchTab(vm)
+        }
     }
 }
 
@@ -159,7 +169,8 @@ private fun HomeTab(vm: CinemaViewModel, play: (Entry) -> Unit) {
     var inRows by remember { mutableStateOf(false) }
     val heroH by androidx.compose.animation.core.animateDpAsState(if (inRows) 186.dp else 232.dp, tween(220), label = "heroH")
     val actionsAlpha by androidx.compose.animation.core.animateFloatAsState(if (inRows) 0f else 1f, tween(180), label = "actions")
-    CinemaPage(vm, h?.backdrop) {
+    PageArt(vm, h?.backdrop, false)
+    run {
         Box(Modifier.height(heroH).fillMaxWidth().padding(top = 18.dp, start = 4.dp)) {
             if (h != null) AnimatedContent(targetState = h, transitionSpec = { fadeIn(tween(260)) togetherWith fadeOut(tween(160)) }, label = "hero") { t -> HeroText(t) }
             else if (ui.loaded) EmptyLibrary(vm)
@@ -251,7 +262,8 @@ private fun GridTab(vm: CinemaViewModel, tab: Tab) {
         }
     }
     var focused by remember { mutableStateOf<Title?>(null) }
-    CinemaPage(vm, (focused ?: list.firstOrNull())?.backdrop, dim = true) {
+    PageArt(vm, (focused ?: list.firstOrNull())?.backdrop, true)
+    run {
         Row(Modifier.padding(top = 18.dp, start = 4.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(tab.label, style = CineType.Page)
             if (list.isNotEmpty()) Text(if (list.size == 1) "1 title" else "${list.size} titles", Modifier.padding(bottom = 4.dp), style = CineType.Small)
@@ -319,7 +331,8 @@ private fun SearchTab(vm: CinemaViewModel) {
     var focused by remember { mutableStateOf<Title?>(null) }
     val firstKey = remember { FocusRequester() }
     LaunchedEffect(Unit) { delay(80); try { firstKey.requestFocus() } catch (e: Exception) { } }
-    CinemaPage(vm, focused?.backdrop, dim = true) {
+    PageArt(vm, focused?.backdrop, true)
+    run {
         Row(Modifier.fillMaxSize().padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
             Column(Modifier.width(276.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(Modifier.fillMaxWidth().background(Color(0x1FE8DCC8), RoundedCornerShape(10.dp)).padding(horizontal = 14.dp, vertical = 10.dp)) {

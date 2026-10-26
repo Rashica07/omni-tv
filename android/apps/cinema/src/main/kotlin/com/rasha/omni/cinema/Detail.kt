@@ -75,7 +75,7 @@ fun TitleScreen(vm: CinemaViewModel, s: Screen.Title, play: (Entry) -> Unit) {
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.55f to Color.Transparent, 1f to tint.copy(alpha = 0.16f))))
         if (!loaded) return@Box
         if (title == null) {
-            Column(Modifier.padding(start = 56.dp, top = 120.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.padding(start = 64.dp, top = 120.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Not available", style = CineType.Hero)
                 Text(s.notice ?: "This title is not in your library.", Modifier.widthIn(max = 520.dp), style = CineType.Body)
                 CineButton("Back", { vm.back() || run { vm.go(Screen.Home); true } }, Modifier.focusRequester(fr), BtnKind.Primary)
@@ -85,7 +85,7 @@ fun TitleScreen(vm: CinemaViewModel, s: Screen.Title, play: (Entry) -> Unit) {
         }
         val rel = remember(title, ui.titles) { related(title, ui.titles) }
         // the page fits one screen: a fixed column, so focusing Play never scrolls the title away
-        Column(Modifier.fillMaxSize().padding(start = 56.dp, end = 48.dp, top = 56.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.fillMaxSize().padding(start = 64.dp, end = 64.dp, top = 56.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             run {
                 Column(Modifier.widthIn(max = 580.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(title.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = if (title.title.length < 22) CineType.Hero.copy(fontSize = 44.sp) else CineType.Hero)
@@ -153,7 +153,7 @@ fun ShowScreen(vm: CinemaViewModel, s: Screen.Show, play: (Entry) -> Unit) {
     LaunchedEffect(next != null) { if (next != null) try { fr.requestFocus() } catch (x: Exception) { } }
     Box(Modifier.fillMaxSize().background(Cine.Bg)) {
         HeroBackdrop(vm.lib, show?.backdrop)
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 56.dp, end = 48.dp, top = 64.dp, bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 64.dp, end = 64.dp, top = 64.dp, bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 Column(Modifier.widthIn(max = 580.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(show?.title ?: "", maxLines = 2, style = CineType.Hero)
