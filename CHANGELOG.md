@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-rc.7
+* **Compact launcher**: smaller, more proportionate Home tiles, a lighter focus (3 dp lift, 4% scale, 2 dp ring) and a smaller title. App artwork and colours are unchanged.
+* **Now Playing**: a compact pill (artwork, title, artist, progress) fed by the active Android media session (Spotify or any player); OK opens a larger view with previous / play-pause / next. No polling; needs OMNI's notification-listener access and is simply absent without it. See `docs/NOW-PLAYING.md`.
+* **Screensaver** shows the playing track's artwork and title in a small capsule. Playback is never touched.
+
 ## 1.0.0-rc.6
 * **OMNI Server redesigned** as a control center on the shared OMNI top bar: Overview (verdict first, four ring gauges, network, services), Resources (charts of real polled readings; no chart until there is enough data), Library (counts, folders, storage, **Scan library now**), Devices (devices that have synced watch progress) and a settings sheet with a confirmed *Forget this server*. Only what the backend provides is shown: no service start/stop (no such endpoint) and no "connected clients" (not tracked). Honest states: unreachable, not signed in, older server without a library, missing values shown as n/a.
 * Fix: a resolved temperature warning was listed as "Resolved:" with no text.

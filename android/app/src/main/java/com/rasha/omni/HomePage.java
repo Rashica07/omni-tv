@@ -38,7 +38,7 @@ final class HomePage extends Page implements ShelfStack.Listener {
 
         LinearLayout text = new LinearLayout(h.context());
         text.setOrientation(LinearLayout.VERTICAL);
-        title = Theme.text(new TextView(h.context()), 52, Theme.TEXT, 800);
+        title = Theme.text(new TextView(h.context()), 44, Theme.TEXT, 800);
         title.setEllipsize(TextUtils.TruncateAt.END);
         title.setLetterSpacing(-0.02f);
         text.addView(title);
@@ -47,7 +47,7 @@ final class HomePage extends Page implements ShelfStack.Listener {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = dp(8);
         text.addView(meta, ml);
-        FrameLayout.LayoutParams tp = new FrameLayout.LayoutParams(dp(760),
+        FrameLayout.LayoutParams tp = new FrameLayout.LayoutParams(dp(470),
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
         tp.leftMargin = dp(Theme.SAFE_SIDE);
         tp.topMargin = dp(10);
@@ -146,6 +146,8 @@ final class HomePage extends Page implements ShelfStack.Listener {
 
     // ------------------------------------------------------------ ShelfStack.Listener
 
+    @Override public boolean onEdge(int dx) { return dx > 0 && host.focusNowPlaying(); }
+
     @Override public void onFocus(ShelfStack.Item it, ShelfStack.Shelf shelf, int index) {
         if (shown) present(it);
     }
@@ -160,7 +162,7 @@ final class HomePage extends Page implements ShelfStack.Listener {
             meta.setText(n == 0 ? "Not opened yet" : "Opened " + n + (n == 1 ? " time" : " times"));
         }
         int len = label.length();
-        title.setTextSize(len <= 10 ? 52 : len <= 18 ? 44 : 36);
+        title.setTextSize(len <= 10 ? 44 : len <= 18 ? 38 : 32);
         title.animate().cancel();
         title.setText(label);
         title.setAlpha(0f);

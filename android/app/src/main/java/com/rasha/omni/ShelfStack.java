@@ -102,10 +102,10 @@ final class ShelfStack extends View {
     private static final float PAD_TOP = 14f;       // room above tiles for the lift and the ring
     private static final float PAD_BOTTOM = 26f;    // room below for the ring and icon names
     private static final float V_GAP = 6f;
-    private static final float COLL_W = 56f;
-    private static final float COLL_H = 48f;
-    private static final float GAP_ACTIVE = 14f;
-    private static final float GAP_COLL = 8f;
+    private static final float COLL_W = 48f;
+    private static final float COLL_H = 42f;
+    private static final float GAP_ACTIVE = 12f;
+    private static final float GAP_COLL = 7f;
     private static final int LEAD = 2;
 
     private final Listener listener;
@@ -162,7 +162,7 @@ final class ShelfStack extends View {
         setFocusable(true);
         stroke.setStyle(Paint.Style.STROKE);
         tileText.setTypeface(Theme.geist);
-        tileText.setTextSize(dp(13));
+        tileText.setTextSize(dp(12));
         tileText.setTextAlign(Paint.Align.CENTER);
         headText.setTypeface(Theme.geist);
         headText.setTextSize(dp(16));
@@ -520,13 +520,13 @@ final class ShelfStack extends View {
     private static float activeW(Item it) {
         switch (it.shape) {
             case SHAPE_SQUARE_SELF:
-            case SHAPE_SQUARE_PLATE: return 112f;
-            case SHAPE_POSTER: return 120f;
-            default: return 200f;
+            case SHAPE_SQUARE_PLATE: return 92f;
+            case SHAPE_POSTER: return 104f;
+            default: return 164f;
         }
     }
 
-    private static float activeH(Shelf s) { return s.kind == KIND_POSTER ? 180f : 112f; }
+    private static float activeH(Shelf s) { return s.kind == KIND_POSTER ? 156f : 92f; }
 
     private float tileW(Item it, float t) { return dp(COLL_W + (activeW(it) - COLL_W) * t); }
 

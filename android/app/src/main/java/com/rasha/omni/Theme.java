@@ -25,10 +25,10 @@ final class Theme {
     static final int TEXT3 = 0xFFA0A0A0;
     // shape and focus geometry (dp)
     static final float RADIUS = 12f;
-    static final float FOCUS_SCALE = 0.08f;
-    static final float FOCUS_LIFT = 6f;
-    static final float RING = 3f;
-    static final float RING_GAP = 3f;
+    static final float FOCUS_SCALE = 0.04f;
+    static final float FOCUS_LIFT = 3f;
+    static final float RING = 2f;
+    static final float RING_GAP = 2f;
     /** Safe area (dp): about 5.5% top/bottom and 64 dp sides (Apple, Amazon, Roku, LG margins: docs/research/platforms.md). */
     static final int SAFE_SIDE = 64;
     static final int SAFE_VERT = 30;

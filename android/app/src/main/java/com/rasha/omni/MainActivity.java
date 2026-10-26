@@ -14,6 +14,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.content.ComponentName;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -38,6 +39,8 @@ public class MainActivity extends Activity implements Host {
     private Images images;
     private Tmdb tmdb;
     private FrameLayout pageHost;
+    private NowPlayingView nowPlaying;
+    private com.rasha.omni.common.NowPlayingSource media;
     private NavBar nav;
     private StatusBar status;
     private NetState net;
@@ -673,6 +676,45 @@ public class MainActivity extends Activity implements Host {
 
     @Override public void focusNav() { nav.requestFocus(); }
 
+    /** Now Playing is only on Home; Right from the end of a shelf reaches it; Down gives focus back to the shelves, Up goes to the header. */
+    @Override public boolean focusNowPlaying() {
+        if (cur != 0 || nowPlaying == null || !nowPlaying.hasTrack() || nowPlaying.getVisibility() != View.VISIBLE) return false;
+        return nowPlaying.requestFocus();
+    }
+
+    private android.media.session.MediaSession debugSess;
+
+    /** Developer check only (OmniDebugOpen): publishes a genuine media session with generated artwork, so the real session pipeline can be exercised without a music app. */
+    private void debugSession(String title, String artist, int state, int n) {
+        if (debugSess == null) { debugSess = new android.media.session.MediaSession(this, "omni-debug"); debugSess.setActive(true); }
+        android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(300, 300, android.graphics.Bitmap.Config.ARGB_8888);
+        int[][] pal = {{0xFF1DB954, 0xFF0B3D20}, {0xFFE8B44F, 0xFF5A2A0A}, {0xFF7A5CFF, 0xFF1A0F4D}, {0xFFC83246, 0xFF3A0A14}};
+        int[] c = pal[Math.abs(n) % pal.length];
+        android.graphics.Paint pt = new android.graphics.Paint();
+        pt.setShader(new android.graphics.LinearGradient(0, 0, 300, 300, c[0], c[1], android.graphics.Shader.TileMode.CLAMP));
+        new android.graphics.Canvas(b).drawRect(0, 0, 300, 300, pt);
+        debugSess.setMetadata(new android.media.MediaMetadata.Builder()
+                .putString(android.media.MediaMetadata.METADATA_KEY_TITLE, title == null ? "Test track" : title)
+                .putString(android.media.MediaMetadata.METADATA_KEY_ARTIST, artist == null ? "Test artist" : artist)
+                .putLong(android.media.MediaMetadata.METADATA_KEY_DURATION, 214000L)
+                .putBitmap(android.media.MediaMetadata.METADATA_KEY_ALBUM_ART, b).build());
+        debugSess.setPlaybackState(new android.media.session.PlaybackState.Builder()
+                .setActions(android.media.session.PlaybackState.ACTION_PLAY | android.media.session.PlaybackState.ACTION_PAUSE | android.media.session.PlaybackState.ACTION_SKIP_TO_NEXT | android.media.session.PlaybackState.ACTION_SKIP_TO_PREVIOUS)
+                .setState(state, 62000L, 1f).build());
+    }
+
+    private void nowPlayingRelease() { if (pages[0] != null) pages[0].focusFirst(); }
+
+    private void nowPlayingChanged(com.rasha.omni.common.Track t) {
+        nowPlaying.set(t);
+        nowPlaying.setShown(cur == 0);
+    }
+
+    private void startMedia() {
+        if (media == null) media = new com.rasha.omni.common.NowPlayingSource(this, new ComponentName(this, MediaListener.class), t -> { nowPlayingChanged(t); return kotlin.Unit.INSTANCE; });
+        media.start();
+    }
+
     @Override public boolean navHasFocus() { return nav.isFocused(); }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
@@ -922,6 +964,7 @@ public class MainActivity extends Activity implements Host {
 
     @Override protected void onStop() {
         super.onStop();
+        if (media != null) media.stop();                               // no session callbacks while the launcher is not on screen
         try { unregisterReceiver(pkgReceiver); } catch (Exception ignored) { }
     }
 
@@ -933,6 +976,7 @@ public class MainActivity extends Activity implements Host {
         if (cur >= 0 && pages[cur] != null) pages[cur].onResume();
         if (welcome != null) welcome.refresh();                       // back from a system screen the setup opened
         if (devices != null) devices.watchSessions();                 // notification access may have just been allowed
+        startMedia();                                                  // Now Playing follows the active media session (a no-op until access is allowed)
         if (wallpaper != null) wallpaper.apply();                      // a new schedule slot while we were away
         if (ambient != null) ambient.boost(false);                     // the bloom relaxes when OMNI is back
         if (launched) {
@@ -961,6 +1005,7 @@ public class MainActivity extends Activity implements Host {
             startActivity(new Intent().setClassName(this, "server".equals(intent.getStringExtra("open")) ? "com.rasha.omni.server.ServerActivity" : "com.rasha.omni.gallery.GalleryActivity"));
             return;
         }
+        if (OmniLog.flag("OmniDebugOpen") && "nowplaying".equals(intent.getStringExtra("open"))) { debugSession(intent.getStringExtra("title"), intent.getStringExtra("artist"), intent.getIntExtra("state", 3), intent.getIntExtra("n", 0)); return; }   // developer check: publishes a real media session so the real pipeline can be seen
         if (OmniLog.flag("OmniDebugOpen") && "remote".equals(intent.getStringExtra("open"))) { openRemoteButtons(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "notice".equals(intent.getStringExtra("open"))) { deviceEvent(EventRules.audio("JBL Bar", EventRules.A_BT_A2DP, true, false)); return; }       // developer check of the notice path
         if (OmniLog.flag("OmniDebugOpen") && "control".equals(intent.getStringExtra("open"))) { openControlCenter(); return; }
@@ -998,6 +1043,7 @@ public class MainActivity extends Activity implements Host {
     @Override public void onBackPressed() {
         if (welcome != null || assistant != null) return;              // the welcome card and the assistant handle Back themselves
         if (cc != null) { cc.dismiss(); return; }
+        if (nowPlaying != null && nowPlaying.isOpen()) { nowPlaying.collapse(true); return; }
         if (sheet != null) { closeSheet(null); return; }
         if (status.isFocused()) { OmniLog.state("back to=nav"); focusNav(); return; }
         if (!nav.isFocused()) {
@@ -1111,6 +1157,15 @@ public class MainActivity extends Activity implements Host {
         bp.topMargin = dp(Theme.SAFE_VERT - 2);
         ambient.addView(banner, bp);
 
+        nowPlaying = new NowPlayingView(this, new NowPlayingView.Listener() {
+            @Override public void onRelease() { nowPlayingRelease(); }
+            @Override public void onUp() { focusNav(); }
+        });
+        FrameLayout.LayoutParams npp = new FrameLayout.LayoutParams(NowPlayingView.widthPx(), NowPlayingView.heightPx(), NowPlayingView.gravity());
+        npp.rightMargin = dp(Theme.SAFE_SIDE);
+        npp.topMargin = dp(98);
+        ambient.addView(nowPlaying, npp);
+
         hintView = Theme.text(new TextView(this), 13, Theme.TEXT3, 500);
         FrameLayout.LayoutParams hv = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END);
@@ -1154,6 +1209,7 @@ public class MainActivity extends Activity implements Host {
         int prev = cur;
         cur = i;
         showPage(prev, i);
+        if (nowPlaying != null) nowPlaying.setShown(i == 0);
         OmniLog.state("tab=" + TABS[i]);
         hintChanged();
     }

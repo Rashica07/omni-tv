@@ -32,6 +32,8 @@ interface Host {
     void focusNav();
     /** True while a header tab has focus: pages must not pull focus away from it when their data arrives. */
     boolean navHasFocus();
+    /** Moves focus to the Now Playing pill when it is showing; false (and focus stays) when it is not. */
+    boolean focusNowPlaying();
     /** Opens the Control Center drawer (status and shortcuts) over whatever is showing. */
     void openControlCenter();
 
