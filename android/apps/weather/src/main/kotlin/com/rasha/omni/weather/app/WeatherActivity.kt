@@ -22,7 +22,10 @@ class WeatherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         vm.onPicked = { name -> setResult(RESULT_OK, Intent().putExtra("place", name)) }
-        setContent { OmniTheme { WeatherScreen(vm) } }
+        // Developer preview only (`setprop log.tag.OmniDebugOpen DEBUG`, extras sim=rain|snow|storm|fog|clear|cloud and hour=0..23): renders the sky and layout for a condition that is not
+        // happening right now. The screen says SIMULATED PREVIEW while it is on, and nothing is stored.
+        val sim: SimPreview? = if (android.util.Log.isLoggable("OmniDebugOpen", android.util.Log.DEBUG)) intent.getStringExtra("sim")?.let { SimPreview(it, intent.getIntExtra("hour", 14), intent.getIntExtra("min", 20)) } else null
+        setContent { OmniTheme { WeatherScreen(vm, sim) } }
     }
 
     override fun onResume() {

@@ -949,7 +949,7 @@ public class MainActivity extends Activity implements Host {
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (intent.getBooleanExtra(HdmiOverlay.EXTRA_KEEP, false)) return;      // the HDMI preview bringing OMNI back in front: stay exactly where you were
-        if (OmniLog.flag("OmniDebugOpen") && "weather".equals(intent.getStringExtra("open"))) { openWeather(); return; }
+        if (OmniLog.flag("OmniDebugOpen") && "weather".equals(intent.getStringExtra("open"))) { if (intent.getStringExtra("sim") != null) startActivity(new Intent().setClassName(this, "com.rasha.omni.weather.app.WeatherActivity").putExtra("sim", intent.getStringExtra("sim")).putExtra("hour", intent.getIntExtra("hour", 14)).putExtra("min", intent.getIntExtra("min", 20))); else openWeather(); return; }
         if (OmniLog.flag("OmniDebugOpen") && intent.getStringExtra("server") != null) { PtvServer.setBase(this, intent.getStringExtra("server")); serverChecked = false; checkServer(true); return; }   // developer setup only
         if (OmniLog.flag("OmniDebugOpen") && "welcome".equals(intent.getStringExtra("open"))) { getSharedPreferences("omni", MODE_PRIVATE).edit().putInt("setup_step", intent.getIntExtra("step", 0)).apply(); openWelcome(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "assistant".equals(intent.getStringExtra("open"))) { openAssistant(); String said = intent.getStringExtra("say"); if (said != null && assistant != null) assistant.postDelayed(() -> { if (assistant != null) assistant.debugSay(said); }, 900); return; }

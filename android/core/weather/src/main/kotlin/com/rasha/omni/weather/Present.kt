@@ -38,6 +38,50 @@ data class DayUi(val label: String, val kind: Kind, val pop: String, val lo: Str
 data class FactUi(val label: String, val value: String)
 data class TileUi(val title: String, val value: String, val sub: String)
 
+/** How trustworthy the numbers on screen are right now. Never presents old data as live. */
+enum class Freshness { Live, Aging, Stale }
+
+object Honesty {
+    const val LIVE_MS = 45 * 60_000L          // the repository refreshes after 30 minutes; a little more is still "current"
+    const val STALE_MS = 3 * 60 * 60_000L     // beyond three hours the numbers are only "the last we saw"
+
+    fun freshness(ageMs: Long, refreshFailed: Boolean): Freshness = when {
+        ageMs > STALE_MS -> Freshness.Stale
+        refreshFailed && ageMs > LIVE_MS -> Freshness.Stale
+        ageMs > LIVE_MS -> Freshness.Aging
+        else -> Freshness.Live
+    }
+
+    /** "Updated just now", "Updated 12 min ago", or, when the data is not current, what the number really is. */
+    fun status(f: Freshness, age: String, refreshing: Boolean): String = when {
+        refreshing -> "Updating\u2026"
+        f == Freshness.Live -> "Updated $age"
+        f == Freshness.Aging -> "Updated $age"
+        else -> "Last known, from $age. Not live."
+    }
+}
+
+/** A sentence about what the next hours bring, from the real hourly forecast only. Null when there is nothing honest to say. */
+object Outlook {
+    fun sentence(hours: List<HourUi>): String? {
+        if (hours.size < 4) return null
+        val now = hours.first()
+        val next = hours.drop(1).take(11)
+        fun wet(k: Kind) = k == Kind.Rain || k == Kind.Storm || k == Kind.Snow
+        val firstWet = next.indexOfFirst { wet(it.kind) || it.popN >= 50 }
+        return when {
+            wet(now.kind) -> {
+                val dry = next.indexOfFirst { !wet(it.kind) && it.popN < 30 }
+                if (dry >= 0) "${now.kind.label()} now, easing around ${clockOf(next[dry])}" else "${now.kind.label()} for the next 12 hours"
+            }
+            firstWet >= 0 -> "${if (next[firstWet].kind == Kind.Snow) "Snow" else "Rain"} likely around ${clockOf(next[firstWet])}"
+            next.all { it.popN < 20 } -> "Dry for the next 12 hours"
+            else -> null
+        }
+    }
+    private fun clockOf(h: HourUi) = "%02d:00".format(h.hour24)
+}
+
 /** Everything the screen draws, as ready-made strings. Built once per update on a background dispatcher; composables only read it. */
 data class WeatherUi(
     val place: String, val dateLine: String, val temp: String, val condition: String, val hiLo: String, val feels: String,

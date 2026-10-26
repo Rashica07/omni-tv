@@ -46,6 +46,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.tv.material3.Text
 import com.rasha.omni.design.Geist
+import com.rasha.omni.design.Glyph
+import com.rasha.omni.design.NavEntry
+import com.rasha.omni.design.OmniTopBar
 
 /**
  * OMNI Cinema's own look, inside the OMNI system: charcoal ground, ivory type, crimson for the one main action, gold for ratings and things you saved.
@@ -130,76 +133,14 @@ fun Tag(text: String, color: Color = Cine.Ivory, modifier: Modifier = Modifier) 
     Text(text, modifier.background(Color(0xD9141416), RoundedCornerShape(5.dp)).padding(horizontal = 6.dp, vertical = 2.dp), style = CineType.Tag.copy(color = color))
 }
 
-/** The navigation glyphs: a few strokes each, drawn (never images), so they match the launcher's custom-drawn icons and cost nothing. */
-enum class Glyph { Home, Movies, Shows, Search, List, Sources }
-
-@Composable
-fun NavGlyph(g: Glyph, color: Color, modifier: Modifier = Modifier) {
-    androidx.compose.foundation.Canvas(modifier.size(20.dp)) {
-        val u = size.minDimension / 24f
-        val st = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f * u, cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
-        fun P(x: Float, y: Float) = Offset(x * u, y * u)
-        when (g) {
-            Glyph.Home -> drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(3 * u, 11 * u); lineTo(12 * u, 3.5f * u); lineTo(21 * u, 11 * u); moveTo(5.5f * u, 9.5f * u); lineTo(5.5f * u, 20.5f * u); lineTo(18.5f * u, 20.5f * u); lineTo(18.5f * u, 9.5f * u) }, color, style = st)
-            Glyph.Movies -> {
-                drawRoundRect(color, P(3f, 5f), Size(18 * u, 14 * u), CornerRadius(3 * u), style = st)
-                drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(10f * u, 9f * u); lineTo(10f * u, 15f * u); lineTo(15.5f * u, 12f * u); close() }, color)
-            }
-            Glyph.Shows -> { drawRoundRect(color, P(3f, 4.5f), Size(18 * u, 12 * u), CornerRadius(3 * u), style = st); drawLine(color, P(8f, 20f), P(16f, 20f), 2f * u, androidx.compose.ui.graphics.StrokeCap.Round) }
-            Glyph.Search -> { drawCircle(color, 6.5f * u, P(10.5f, 10.5f), style = st); drawLine(color, P(15.5f, 15.5f), P(20.5f, 20.5f), 2f * u, androidx.compose.ui.graphics.StrokeCap.Round) }
-            Glyph.List -> drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(6f * u, 3.5f * u); lineTo(18f * u, 3.5f * u); lineTo(18f * u, 20.5f * u); lineTo(12f * u, 16f * u); lineTo(6f * u, 20.5f * u); close() }, color, style = st)
-            Glyph.Sources -> for (k in 0..1) { val y = 4f + k * 8.5f; drawRoundRect(color, P(3.5f, y), Size(17 * u, 7 * u), CornerRadius(2.5f * u), style = st); drawCircle(color, 1.2f * u, P(16.5f, y + 3.5f)) }
-        }
-    }
-}
-
-/** One navigation item. Compact (icon only) at rest; the selected item and the focused item open to show their name. Focused = solid ivory with dark content (the launcher's control-focus rule). */
-@Composable
-private fun NavItem(g: Glyph, label: String, selected: Boolean, onClick: () -> Unit) {
-    var focused by remember { mutableStateOf(false) }
-    val open = selected || focused
-    val bg by animateColorAsState(when { focused -> Cine.Ivory; selected -> Color(0x33E8DCC8); else -> Color.Transparent }, tween(120), label = "navBg")
-    val fg = if (focused) Cine.Ink else if (selected) Cine.Ivory else Cine.Ivory2
-    Row(Modifier.height(38.dp).onFocusChanged { focused = it.isFocused }.clip(RoundedCornerShape(50)).background(bg)
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick).animateContentSize(tween(180))
-        .padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        NavGlyph(g, fg)
-        if (open) Text(label, Modifier.padding(start = 8.dp), maxLines = 1, style = CineType.Nav.copy(color = fg, fontWeight = FontWeight.SemiBold, fontSize = 14.sp))
-    }
-}
-
-@Composable
-private fun Capsule(content: @Composable () -> Unit) {
-    Row(Modifier.height(46.dp).background(Color(0x99141416), RoundedCornerShape(50)).border(1.dp, Cine.Line, RoundedCornerShape(50)).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) { content() }
-}
-
-/**
- * The top bar, built like the launcher's: the OMNI mark on the left, a glass capsule of icons (Home, Movies, Shows), and on the right a second small capsule
- * with the utilities (Search, My List, Sources). Only the selected or focused item shows its name. Inside the 64 dp / 30 dp safe area.
- */
+/** The top bar: the shared OMNI bar with Cinema's destinations. */
 @Composable
 fun TopNav(current: Tab, onTab: (Tab) -> Unit, onSources: () -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-        androidx.compose.foundation.Canvas(Modifier.size(26.dp)) {
-            drawCircle(Cine.Ivory, size.minDimension * 0.42f, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.6.dp.toPx()))
-            drawCircle(Cine.Crimson, size.minDimension * 0.15f)
-        }
-        Column(Modifier.padding(start = 10.dp, end = 26.dp)) {
-            Text("OMNI", style = CineType.Nav.copy(fontWeight = FontWeight.Bold, letterSpacing = 3.sp, fontSize = 15.sp))
-            Text("CINEMA", style = CineType.Tag.copy(color = Cine.Ivory3, letterSpacing = 3.2.sp))
-        }
-        Capsule {
-            NavItem(Glyph.Home, Tab.Home.label, current == Tab.Home) { onTab(Tab.Home) }
-            NavItem(Glyph.Movies, Tab.Movies.label, current == Tab.Movies) { onTab(Tab.Movies) }
-            NavItem(Glyph.Shows, Tab.Shows.label, current == Tab.Shows) { onTab(Tab.Shows) }
-        }
-        Box(Modifier.weight(1f))
-        Capsule {
-            NavItem(Glyph.Search, Tab.Search.label, current == Tab.Search) { onTab(Tab.Search) }
-            NavItem(Glyph.List, Tab.MyList.label, current == Tab.MyList) { onTab(Tab.MyList) }
-            NavItem(Glyph.Sources, "Sources", false, onSources)
-        }
-    }
+    OmniTopBar("Cinema",
+        left = listOf(NavEntry("home", Glyph.Home, "Home"), NavEntry("movies", Glyph.Movies, "Movies"), NavEntry("shows", Glyph.Shows, "Shows")),
+        right = listOf(NavEntry("search", Glyph.Search, "Search"), NavEntry("mylist", Glyph.List, "My List"), NavEntry("sources", Glyph.Sources, "Sources")),
+        selected = current.name.lowercase(), modifier = modifier,
+        onSelect = { id -> if (id == "sources") onSources() else Tab.values().firstOrNull { it.name.lowercase() == id }?.let(onTab) })
 }
 
 /** A focusable surface for the Sources pages: a quiet raised tile that lifts on focus (lighter, with an ivory edge), so text of any colour stays readable. */

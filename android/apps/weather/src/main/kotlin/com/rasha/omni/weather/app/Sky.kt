@@ -44,7 +44,7 @@ import kotlin.random.Random
 
 data class SkyColors(val top: Color, val mid: Color, val bottom: Color)
 
-private val Night = SkyColors(Color(0xFF0B1534), Color(0xFF0A1226), Color(0xFF05070D))
+private val Night = SkyColors(Color(0xFF122660), Color(0xFF0F1D49), Color(0xFF060A18))
 private val Twilight = SkyColors(Color(0xFF3B4A86), Color(0xFFD4805E), Color(0xFF1A1A28))
 private val Daytime = SkyColors(Color(0xFF2A78CF), Color(0xFF4F97D8), Color(0xFF0E2A48))
 
@@ -89,14 +89,14 @@ private fun cloudBitmap(tint: Color): ImageBitmap {
 
 /** The whole sky as one canvas. Colours change smoothly when the conditions or the place change; only a few cheap shapes move. */
 @Composable
-fun SkyScene(ui: WeatherUi, animate: Boolean) {
+fun SkyScene(ui: WeatherUi, animate: Boolean, lite: Boolean = false) {
     val target = remember(ui.kind, ui.nowMin / 5, ui.sunriseMin, ui.sunsetMin) { skyFor(ui) }
     val top by animateColorAsState(target.top, tween(if (animate) 800 else 0), label = "top")
     val mid by animateColorAsState(target.mid, tween(if (animate) 800 else 0), label = "mid")
     val bottom by animateColorAsState(target.bottom, tween(if (animate) 800 else 0), label = "bottom")
     val stars = remember { List(70) { Triple(Random(it).nextFloat(), Random(it + 100).nextFloat() * 0.55f, 0.4f + Random(it + 200).nextFloat() * 0.6f) } }
     var drift by remember { mutableFloatStateOf(0f) }
-    if (animate) LaunchedEffect(Unit) { while (true) { delay(100); drift = (drift + 0.00055f) % 1000f } }       // ten redraws a second of a handful of shapes
+    if (animate) LaunchedEffect(lite) { while (true) { delay(if (lite) 200 else 100); drift = (drift + (if (lite) 0.0011f else 0.00055f)) % 1000f } }       // five to ten redraws a second of a handful of shapes
     val alt = SkyMath.altitude(ui.nowMin, ui.sunriseMin, ui.sunsetMin)
     val (_, _, nightW) = SkyMath.weights(alt)
     val dayTime = SkyMath.isDay(ui.nowMin, ui.sunriseMin, ui.sunsetMin)
@@ -107,7 +107,7 @@ fun SkyScene(ui: WeatherUi, animate: Boolean) {
     val density = LocalDensity.current.density
     val cloudTint = when { ui.kind == Kind.Rain || ui.kind == Kind.Storm -> Color(0xFF5D6673); !dayTime -> Color(0xFF8C9AB8); ui.kind == Kind.Cloud || ui.kind == Kind.Fog -> Color(0xFFD5DCE4); else -> Color.White }
     val clouds = remember(cloudTint) { cloudBitmap(cloudTint) }                       // tinted once, so drawing is a plain blit with no per-frame colour filter
-    val layers = (ui.cloudiness * 4f).toInt().coerceIn(if (ui.kind == Kind.Clear) 0 else 1, 4)
+    val layers = (ui.cloudiness * 4f).toInt().coerceIn(if (ui.kind == Kind.Clear) 0 else 1, if (lite) 2 else 4)
     val flash = remember { Animatable(0f) }
     if (animate && ui.kind == Kind.Storm) LaunchedEffect(Unit) { while (true) { delay(Random.nextLong(7000, 13000)); flash.animateTo(0.55f, tween(60)); flash.animateTo(0f, tween(240)); delay(120); flash.animateTo(0.35f, tween(50)); flash.animateTo(0f, tween(300)) } }
 
@@ -119,7 +119,7 @@ fun SkyScene(ui: WeatherUi, animate: Boolean) {
             // stars, only on a clear-ish night
             if (nightW > 0.3 && ui.cloudiness < 0.8f) for ((sx, sy, sa) in stars) drawCircle(Color.White.copy(alpha = (sa * (1f - ui.cloudiness) * nightW.toFloat()).coerceIn(0f, 0.9f)), (0.8f + sa) * density, Offset(sx * w, sy * h))
             // the sun, or the moon with its real phase, on its real arc between sunrise and sunset
-            val cx = w * (0.10f + 0.80f * arc); val cy = h * (0.44f - 0.32f * sin(PI.toFloat() * arc))
+            val cx = w * (0.50f + 0.42f * arc); val cy = h * (0.44f - 0.32f * sin(PI.toFloat() * arc))
             val vis = (1f - 0.8f * ui.cloudiness).coerceIn(0.15f, 1f)
             val disc = (1f - 1.15f * ui.cloudiness).coerceIn(0f, 1f)                         // behind thick cloud there is a glow, not a disc
             if (dayTime) {
@@ -156,18 +156,18 @@ fun SkyScene(ui: WeatherUi, animate: Boolean) {
             }
             if (flash.value > 0f) drawRect(Color.White.copy(alpha = flash.value))
         }
-        if (animate) Particles(ui.kind)
+        if (animate) Particles(ui.kind, if (lite) 28 else 70)
     }
 }
 
 /** Rain or snow. The animation clock is read only inside the draw lambda, so a frame redraws 70 short lines and recomposes nothing. */
 @Composable
-fun Particles(kind: Kind) {
+fun Particles(kind: Kind, count: Int = 70) {
     if (kind != Kind.Rain && kind != Kind.Storm && kind != Kind.Snow) return
     val snow = kind == Kind.Snow
-    val xs = remember { FloatArray(70) { Random.nextFloat() } }
-    val ys = remember { FloatArray(70) { Random.nextFloat() } }
-    val sp = remember { FloatArray(70) { 0.5f + Random.nextFloat() } }
+    val xs = remember(count) { FloatArray(count) { Random.nextFloat() } }
+    val ys = remember(count) { FloatArray(count) { Random.nextFloat() } }
+    val sp = remember(count) { FloatArray(count) { 0.5f + Random.nextFloat() } }
     var tick by remember { mutableLongStateOf(0L) }
     LaunchedEffect(kind) {
         var last = 0L

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0-rc.5
+* **OMNI Weather redesigned.** The shared OMNI top bar (now one component for Cinema and Weather) with Today, Hourly and Week and small Refresh / Change city icons; the temperature as the primary element; an honest one-line outlook from the real hourly forecast; a quiet details row; a temperature curve with focusable hour cards; a seven-day list with range bars. The existing procedural sky is kept and tuned (brighter night, sun and moon moved clear of the text) with a lighter variant for low-memory TVs. Old data is labelled "Last known ... Not live." Unchanged: Open-Meteo, caching, the city list, OK to refresh, hold OK / Menu for cities. No alerts section: the data source has none.
+
 ## 1.0.0-rc.4
 * Cinema's top bar now follows the launcher's navigation rules: the OMNI mark, a glass capsule of icons (Home, Movies, Shows) where the selected item opens to show its name, and on the right a small capsule of icon utilities (Search, My List, Sources). Pages use the launcher's 64 dp / 30 dp safe area. Choosing a tab keeps focus on it. The rules are written down in `docs/CINEMA-UX.md`.
 

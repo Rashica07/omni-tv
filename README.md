@@ -20,6 +20,10 @@ Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-
 | ![Cinema](docs/screenshots/cinema-home.jpg) | ![Rows](docs/screenshots/cinema-rows.jpg) |
 | **Title page** with More Like This | **Movies** with genre filters, plus Search and My List |
 | ![Title](docs/screenshots/cinema-title.jpg) | ![Movies](docs/screenshots/cinema-movies.jpg) |
+| **Weather: Today** | **Weather: Week** |
+| ![Weather today](docs/screenshots/weather-today.jpg) | ![Weather week](docs/screenshots/weather-week.jpg) |
+| **Weather: Hourly** | **Developer previews of the sky** (not real weather): sunset and rain |
+| ![Weather hourly](docs/screenshots/weather-hourly.jpg) | ![Sunset preview](docs/screenshots/weather-sunset-preview.jpg) |
 
 ## What you get
 - **Welcome & setup**: a liquid-glass *WELCOME TO OMNI UI* first run over your wallpaper, then Home, a live remote check, OMNI server discovery on your network, weather place and permissions. Run it again any time from Settings.
@@ -31,7 +35,8 @@ Built and measured on one deliberately weak TV (Vestel/MediaTek, Android 11, 32-
 - **Universal search** across apps, channels, films, inputs and settings.
 - **HDMI inputs** with a live preview card that expands to full screen with sound, without leaving the launcher. *Brand-dependent*, see Status.
 - **OMNI Cinema**: a streaming-style home for your own films (charcoal, ivory, crimson and gold, with the artwork setting the mood): a cinematic hero, rows for Continue Watching, My List, Recently Added, your server, free films and genres, Movies / Shows / My List / Search tabs, title pages with More Like This. It plays from your home server (resuming where you stopped, on any device), USB drives and the Internet Archive.
-- **Weather, Server status and the Screensaver** are built into the same app (each runs in its own process and exits when you close it): the weather screen, the home-server dashboard, and landscape photos when the TV is idle. No separate installs, no extra icons.
+- **Weather** has its own atmospheric look (the sky follows the real conditions and the real sunrise and sunset; Today, Hourly and Week pages; honest about old data), see `docs/WEATHER-UX.md`.
+- **Server status and the Screensaver**, with Weather and Cinema, are built into the same app (each runs in its own process and exits when you close it): the weather screen, the home-server dashboard, and landscape photos when the TV is idle. No separate installs, no extra icons.
 - **`omniptvd`**: a home server in plain Python (standard library only) that scans a folder of films, matches posters and overviews through TMDB, streams the original files with byte ranges, and keeps watch positions.
 
 ## Status, honestly
