@@ -40,6 +40,7 @@ public class MainActivity extends Activity implements Host {
     private Tmdb tmdb;
     private FrameLayout pageHost;
     private NowPlayingView nowPlaying;
+    private final Runnable idleCheck = this::maybeAmbient;
     private com.rasha.omni.common.NowPlayingSource media;
     private NavBar nav;
     private StatusBar status;
@@ -703,6 +704,22 @@ public class MainActivity extends Activity implements Host {
                 .setState(state, 62000L, 1f).build());
     }
 
+    /** Optional idle ambient: after the chosen minutes without a remote key on the launcher, the ambient display starts. Off by default (Gallery settings). */
+    private void armIdle() {
+        ui.removeCallbacks(idleCheck);
+        int m = new com.rasha.omni.gallery.GallerySettings(this).getIdleMin();
+        if (m > 0) ui.postDelayed(idleCheck, m * 60_000L);
+    }
+
+    private void maybeAmbient() {
+        boolean busy = cc != null || sheet != null || search != null || welcome != null || assistant != null || capturingKey || (nowPlaying != null && nowPlaying.isOpen());
+        boolean music = nowPlaying != null && nowPlaying.isPlaying() && new com.rasha.omni.gallery.GallerySettings(this).getMusicMode() == 1;
+        if (busy || music) { armIdle(); return; }                      // never interrupts a menu, a setup step, or music when the person said not to
+        try { startActivity(new Intent().setClassName(this, "com.rasha.omni.gallery.SlideshowActivity").putExtra("idle", true)); } catch (RuntimeException e) { armIdle(); }
+    }
+
+    @Override public void onUserInteraction() { super.onUserInteraction(); armIdle(); }
+
     private void nowPlayingRelease() { if (pages[0] != null) pages[0].focusFirst(); }
 
     private void nowPlayingChanged(com.rasha.omni.common.Track t) {
@@ -718,6 +735,7 @@ public class MainActivity extends Activity implements Host {
     @Override public boolean navHasFocus() { return nav.isFocused(); }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        if (e.getAction() == KeyEvent.ACTION_DOWN) armIdle();
         if (OmniLog.flag("OmniKeys") && e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) OmniLog.state("key code=" + e.getKeyCode() + " " + KeyEvent.keyCodeToString(e.getKeyCode()) + " scan=" + e.getScanCode());
         if (capturingKey && e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) { captured(e); return true; }
         if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0 && cc == null && sheet == null && search == null && welcome == null && assistant == null) {
@@ -968,7 +986,7 @@ public class MainActivity extends Activity implements Host {
         try { unregisterReceiver(pkgReceiver); } catch (Exception ignored) { }
     }
 
-    @Override protected void onPause() { HdmiOverlay.launcherResumed = false; super.onPause(); }
+    @Override protected void onPause() { HdmiOverlay.launcherResumed = false; ui.removeCallbacks(idleCheck); super.onPause(); }
 
     @Override protected void onResume() {
         super.onResume();
@@ -976,6 +994,7 @@ public class MainActivity extends Activity implements Host {
         if (cur >= 0 && pages[cur] != null) pages[cur].onResume();
         if (welcome != null) welcome.refresh();                       // back from a system screen the setup opened
         if (devices != null) devices.watchSessions();                 // notification access may have just been allowed
+        armIdle();
         startMedia();                                                  // Now Playing follows the active media session (a no-op until access is allowed)
         if (wallpaper != null) wallpaper.apply();                      // a new schedule slot while we were away
         if (ambient != null) ambient.boost(false);                     // the bloom relaxes when OMNI is back
@@ -1006,6 +1025,7 @@ public class MainActivity extends Activity implements Host {
             return;
         }
         if (OmniLog.flag("OmniDebugOpen") && "nowplaying".equals(intent.getStringExtra("open"))) { debugSession(intent.getStringExtra("title"), intent.getStringExtra("artist"), intent.getIntExtra("state", 3), intent.getIntExtra("n", 0)); return; }   // developer check: publishes a real media session so the real pipeline can be seen
+        if (OmniLog.flag("OmniDebugOpen") && "ambient".equals(intent.getStringExtra("open"))) { com.rasha.omni.gallery.GallerySettings gs = new com.rasha.omni.gallery.GallerySettings(this); if (intent.hasExtra("spot")) gs.setClockSpot(intent.getIntExtra("spot", 0)); if (intent.hasExtra("style")) gs.setClockStyle(intent.getIntExtra("style", 0)); startActivity(new Intent().setClassName(this, "com.rasha.omni.gallery.SlideshowActivity").putExtra("idle", intent.getBooleanExtra("idle", false))); return; }
         if (OmniLog.flag("OmniDebugOpen") && "remote".equals(intent.getStringExtra("open"))) { openRemoteButtons(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "notice".equals(intent.getStringExtra("open"))) { deviceEvent(EventRules.audio("JBL Bar", EventRules.A_BT_A2DP, true, false)); return; }       // developer check of the notice path
         if (OmniLog.flag("OmniDebugOpen") && "control".equals(intent.getStringExtra("open"))) { openControlCenter(); return; }

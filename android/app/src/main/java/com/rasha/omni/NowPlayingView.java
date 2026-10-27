@@ -77,6 +77,8 @@ final class NowPlayingView extends View {
 
     boolean hasTrack() { return track != null; }
 
+    boolean isPlaying() { return track != null && track.getPlaying(); }
+
     /** A new reading from the media session (or null when nothing is playing any more). */
     void set(Track t) {
         boolean newTrack = t != null && (track == null || !same(track, t));

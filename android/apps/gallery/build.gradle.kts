@@ -22,4 +22,5 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.core.ktx)
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

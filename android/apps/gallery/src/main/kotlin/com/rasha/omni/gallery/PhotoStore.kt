@@ -18,10 +18,13 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
-enum class Source { Curated, Local }
+enum class Source { Bing, Curated, Local }
+
+/** A video on this TV. */
+data class Video(val id: Long, val uri: String, val title: String, val durationMs: Long)
 
 /** One photograph. [uri] is a file path (curated) or a content URI (this TV's photos). Credit and licence travel with it so they can always be shown. */
-data class Photo(val id: String, val uri: String, val title: String, val credit: String, val source: Source)
+data class Photo(val id: String, val uri: String, val title: String, val credit: String, val source: Source, val date: String = "", val caption: String = "")
 
 /**
  * Where photographs come from. Curated landscapes are downloaded from Wikimedia Commons (open licences only, credit kept, cached on disk so the frame
@@ -58,6 +61,28 @@ class PhotoStore(private val ctx: Context) {
         } catch (e: SecurityException) { }
         return out
     }
+
+    /** Bing's daily photographs already on disk (see [BingProvider]); the provider itself does the network work. */
+    fun bing(): List<Photo> = BingProvider(ctx).cached()
+
+    /** Videos on this TV (media store). They are browsed and opened in the system player; the ambient display only ever shows photographs. */
+    fun videos(limit: Int = 300): List<Video> {
+        if (!hasStoragePermission()) return emptyList()
+        val out = ArrayList<Video>()
+        try {
+            ctx.contentResolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DISPLAY_NAME, MediaStore.Video.Media.DURATION),
+                null, null, "${MediaStore.Video.Media.DATE_ADDED} DESC")?.use { c ->
+                while (c.moveToNext() && out.size < limit) out += Video(c.getLong(0), ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, c.getLong(0)).toString(), c.getString(1).orEmpty().substringBeforeLast('.'), c.getLong(2))
+            }
+        } catch (e: SecurityException) { }
+        return out
+    }
+
+    /** A small poster frame for a video, at most about [w] x [h]. Off the main thread only. */
+    fun videoThumb(v: Video, w: Int, h: Int): Bitmap? = try {
+        if (android.os.Build.VERSION.SDK_INT >= 29) ctx.contentResolver.loadThumbnail(Uri.parse(v.uri), android.util.Size(w, h), null)
+        else @Suppress("DEPRECATION") MediaStore.Video.Thumbnails.getThumbnail(ctx.contentResolver, v.id, MediaStore.Video.Thumbnails.MINI_KIND, null)
+    } catch (e: Exception) { null }
 
     // ---- favourites
     fun favorites(): Set<String> = prefs.getStringSet("fav", emptySet()) ?: emptySet()
@@ -116,7 +141,7 @@ class PhotoStore(private val ctx: Context) {
     /** Decodes near the screen size (never the full-resolution original), applying the photo's own orientation. Off the main thread only. */
     fun decode(p: Photo, w: Int, h: Int): Bitmap? = try {
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        fun open() = if (p.source == Source.Curated) java.io.FileInputStream(p.uri) else ctx.contentResolver.openInputStream(Uri.parse(p.uri))!!
+        fun open() = if (p.source != Source.Local) java.io.FileInputStream(p.uri) else ctx.contentResolver.openInputStream(Uri.parse(p.uri))!!
         open().use { BitmapFactory.decodeStream(it, null, opts) }
         var s = 1
         while (opts.outWidth / (s * 2) >= w && opts.outHeight / (s * 2) >= h) s *= 2

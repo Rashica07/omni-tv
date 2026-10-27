@@ -52,7 +52,7 @@ object Brand {
 }
 
 /** The navigation glyphs: a few strokes each, drawn (never images), so they match the launcher's custom-drawn icons and cost nothing. */
-enum class Glyph { Home, Movies, Shows, Search, List, Sources, Sun, Clock, Calendar, Refresh, Pin, Gauge, Chart, Device, Gear }
+enum class Glyph { Home, Movies, Shows, Search, List, Sources, Sun, Clock, Calendar, Refresh, Pin, Gauge, Chart, Device, Gear, Photo }
 
 @Composable
 fun NavGlyph(g: Glyph, color: Color, modifier: Modifier = Modifier) {
@@ -75,6 +75,7 @@ fun NavGlyph(g: Glyph, color: Color, modifier: Modifier = Modifier) {
             Glyph.Chart -> drawPath(Path().apply { moveTo(3.5f * u, 19.5f * u); lineTo(3.5f * u, 4.5f * u); moveTo(3.5f * u, 17f * u); lineTo(9f * u, 11f * u); lineTo(13f * u, 14f * u); lineTo(20.5f * u, 6f * u) }, color, style = st)
             Glyph.Device -> { drawRoundRect(color, P(3f, 6f), Size(18 * u, 11 * u), CornerRadius(2.5f * u), style = st); drawLine(color, P(7f, 20f), P(17f, 20f), 2f * u, StrokeCap.Round); drawLine(color, P(12f, 17f), P(12f, 20f), 2f * u, StrokeCap.Round) }
             Glyph.Gear -> { drawCircle(color, 3.2f * u, P(12f, 12f), style = st); for (a in 0 until 8) { val t = a * Math.PI / 4; drawLine(color, P(12f + (6.4 * Math.cos(t)).toFloat(), 12f + (6.4 * Math.sin(t)).toFloat()), P(12f + (9.4 * Math.cos(t)).toFloat(), 12f + (9.4 * Math.sin(t)).toFloat()), 2.4f * u, StrokeCap.Round) }; drawCircle(color, 6.4f * u, P(12f, 12f), style = st) }
+            Glyph.Photo -> { drawRoundRect(color, P(3f, 4.5f), Size(18 * u, 15 * u), CornerRadius(2.5f * u), style = st); drawCircle(color, 1.8f * u, P(8.5f, 9.5f), style = st); drawPath(Path().apply { moveTo(3.5f * u, 17f * u); lineTo(9f * u, 12.5f * u); lineTo(13f * u, 16f * u); lineTo(16f * u, 13.5f * u); lineTo(20.5f * u, 17.5f * u) }, color, style = st) }
             Glyph.Pin -> { drawPath(Path().apply { moveTo(12f * u, 21f * u); cubicTo(5f * u, 14f * u, 5f * u, 9f * u, 5f * u, 9f * u); cubicTo(5f * u, 5f * u, 8.2f * u, 3f * u, 12f * u, 3f * u); cubicTo(15.8f * u, 3f * u, 19f * u, 5f * u, 19f * u, 9f * u); cubicTo(19f * u, 9f * u, 19f * u, 14f * u, 12f * u, 21f * u); close() }, color, style = st); drawCircle(color, 2.6f * u, P(12f, 9.5f), style = st) }
         }
     }

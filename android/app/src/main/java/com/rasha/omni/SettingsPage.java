@@ -57,7 +57,8 @@ final class SettingsPage extends Page {
         list.addView(item("Welcome & setup", "Run the setup again", false, host::openWelcome));
         list.addView(item("Remote buttons", "INFO, colour keys, mic", false, host::openRemoteButtons));
         list.addView(item("Server", "Home server status", false, () -> openOwn("com.rasha.omni.server.ServerActivity")));
-        list.addView(item("Screensaver", "Landscape photos when idle", false, () -> openOwn("com.rasha.omni.gallery.GalleryActivity")));
+        list.addView(item("Gallery", "Photos, videos, ambient display settings", false, () -> openOwn("com.rasha.omni.gallery.GalleryActivity")));
+        list.addView(item("Ambient display", "Start the photograph and clock now", false, () -> openOwn("com.rasha.omni.gallery.SlideshowActivity")));
         for (int i = 0; i < NAMES.length; i++) {
             final String action = ACTIONS[i];
             list.addView(item(NAMES[i], DESC[i], false, () -> openSetting(action)));

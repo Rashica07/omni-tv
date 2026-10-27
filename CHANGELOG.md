@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-rc.8
+* **Gallery redesigned**: an ambient display (full-screen photograph, oversized thin clock placed in the quietest part of each photograph, date, credit, slow drift and cross-fade) and a gallery (Photos and Videos grids, full-screen viewer). Minimal and expressive clock styles.
+* **Bing's daily photograph** as a source, with title, description, credit and date; cached and refreshed at most twice a day, kept offline. Isolated behind a replaceable provider.
+* **Optional idle ambient** (off by default; 5/10/30 min), configurable behaviour while music plays, bounded keep-screen-on. Settings -> "Ambient display" starts it directly.
+* Compact header: smaller nav bar, logo, labels and status bar.
+
 ## 1.0.0-rc.7
 * **Compact launcher**: smaller, more proportionate Home tiles, a lighter focus (3 dp lift, 4% scale, 2 dp ring) and a smaller title. App artwork and colours are unchanged.
 * **Now Playing**: a compact pill (artwork, title, artist, progress) fed by the active Android media session (Spotify or any player); OK opens a larger view with previous / play-pause / next. No polling; needs OMNI's notification-listener access and is simply absent without it. See `docs/NOW-PLAYING.md`.
