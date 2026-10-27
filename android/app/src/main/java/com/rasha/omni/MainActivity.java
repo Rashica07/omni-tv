@@ -714,6 +714,18 @@ public class MainActivity extends Activity implements Host {
         if (m > 0) ui.postDelayed(idleCheck, m * 60_000L);
     }
 
+    /** The daily update check: quiet unless something new is found, then one notice that points to Settings > Updates. */
+    private void updateCheck() {
+        final Updater u = Updater.get(this);
+        u.checkIfDue(m -> {
+            UpdateRules.Release r = u.available();
+            if (r == null) return;
+            String v = r.tag.replaceFirst("^v", "");
+            if (u.personalBuild()) flash("Update available", "OMNI " + v + ": install your own build");
+            else if (u.downloaded() != null) flash("Update ready", "OMNI " + v + ": Settings > Updates > Install now");
+        });
+    }
+
     private void maybeAmbient() {
         boolean busy = cc != null || sheet != null || search != null || welcome != null || assistant != null || capturingKey || (nowPlaying != null && nowPlaying.isOpen());
         boolean music = nowPlaying != null && nowPlaying.isPlaying() && new com.rasha.omni.gallery.GallerySettings(this).getMusicMode() == 1;
@@ -948,6 +960,7 @@ public class MainActivity extends Activity implements Host {
         pages[4] = new SettingsPage(this);
         selectTab(0);
         rescan();
+        if (!safeMode) ui.postDelayed(this::updateCheck, 25_000);        // once a day at most; the launcher start-up is never delayed by it
         if (safeMode) ui.postDelayed(() -> flash("Safe mode", "OMNI crashed a few times. Settings > Crash report has the details"), 1500);
         else if (!getSharedPreferences("omni", MODE_PRIVATE).getBoolean("setup_done", false)) ui.postDelayed(this::openWelcome, 700);     // first run
     }
@@ -1030,6 +1043,7 @@ public class MainActivity extends Activity implements Host {
             return;
         }
         if (OmniLog.flag("OmniDebugOpen") && "nowplaying".equals(intent.getStringExtra("open"))) { debugSession(intent.getStringExtra("title"), intent.getStringExtra("artist"), intent.getIntExtra("state", 3), intent.getIntExtra("n", 0)); return; }   // developer check: publishes a real media session so the real pipeline can be seen
+        if (OmniLog.flag("OmniDebugOpen") && "updates".equals(intent.getStringExtra("open"))) { Updater up = Updater.get(this); if (intent.getStringExtra("feed") != null) up.debugFeed(intent.getStringExtra("feed")); up.check(m -> { flash("Updates", m); }); return; }   // developer check against a local test feed
         if (OmniLog.flag("OmniDebugOpen") && "ambient".equals(intent.getStringExtra("open"))) { com.rasha.omni.gallery.GallerySettings gs = new com.rasha.omni.gallery.GallerySettings(this); if (intent.hasExtra("spot")) gs.setClockSpot(intent.getIntExtra("spot", 0)); if (intent.hasExtra("style")) gs.setClockStyle(intent.getIntExtra("style", 0)); startActivity(new Intent().setClassName(this, "com.rasha.omni.gallery.SlideshowActivity").putExtra("idle", intent.getBooleanExtra("idle", false))); return; }
         if (OmniLog.flag("OmniDebugOpen") && "remote".equals(intent.getStringExtra("open"))) { openRemoteButtons(); return; }
         if (OmniLog.flag("OmniDebugOpen") && "notice".equals(intent.getStringExtra("open"))) { deviceEvent(EventRules.audio("JBL Bar", EventRules.A_BT_A2DP, true, false)); return; }       // developer check of the notice path

@@ -63,6 +63,7 @@ No analytics, advertising, crash reporting or tracking code is included. The onl
 |---|---|
 | `api.themoviedb.org`, `image.tmdb.org` | film metadata and posters (TMDB) |
 | `api.open-meteo.com` | weather |
+| `api.github.com`, `github.com` | the daily update check and the verified download (Settings > Updates; can be switched off). Nothing identifying is sent |
 | `www.bing.com` | the daily photo, **only if you choose it** in Settings > Wallpaper (the default source is Wikimedia Commons) |
 | `commons.wikimedia.org`, `upload.wikimedia.org` | wallpapers (default) and the Gallery screensaver landscapes |
 | `archive.org` | optional public-domain films in Cinema |

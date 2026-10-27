@@ -1,6 +1,7 @@
 package com.rasha.omni;
 
 import android.content.Intent;
+import android.os.Build;
 import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,6 +60,7 @@ final class SettingsPage extends Page {
         list.addView(item("Server", "Home server status", false, () -> openOwn("com.rasha.omni.server.ServerActivity")));
         list.addView(item("Gallery", "Photos, videos, ambient display settings", false, () -> openOwn("com.rasha.omni.gallery.GalleryActivity")));
         list.addView(item("Ambient display", "Start the photograph and clock now", false, () -> openOwn("com.rasha.omni.gallery.SlideshowActivity")));
+        list.addView(item("Updates", updatesLine(), false, this::updatesMenu));
         if (CrashGuard.report(host.context()) != null) list.addView(item("Crash report", "What OMNI recorded when it last crashed", false, this::showCrash));
         for (int i = 0; i < NAMES.length; i++) {
             final String action = ACTIONS[i];
@@ -143,6 +145,65 @@ final class SettingsPage extends Page {
     private void openOwn(String className) {
         try { host.context().startActivity(new Intent().setClassName(host.context().getPackageName(), className)); }
         catch (Exception e) { Toast.makeText(host.context(), "Not available", Toast.LENGTH_SHORT).show(); }
+    }
+
+    private String updatesLine() {
+        Updater u = Updater.get(host.context());
+        UpdateRules.Release r = u.available();
+        if (r != null) return u.downloaded() != null && !u.personalBuild() ? "OMNI " + r.tag.replaceFirst("^v", "") + " is ready to install" : "OMNI " + r.tag.replaceFirst("^v", "") + " is available";
+        return "Installed " + u.installed() + (u.lastCheck() > 0 ? ", up to date" : "");
+    }
+
+    private static String ago(long then) {
+        long m = Math.max(0, (System.currentTimeMillis() - then) / 60000);
+        return m < 2 ? "just now" : m < 120 ? m + " min ago" : m < 2880 ? (m / 60) + " h ago" : (m / 1440) + " days ago";
+    }
+
+    /** Updates: what is installed, what was found, and one press to install it. The system installer still asks you to confirm. */
+    private void updatesMenu() {
+        final Updater u = Updater.get(host.context());
+        final UpdateRules.Release r = u.available();
+        final boolean personal = u.personalBuild();
+        final List<String> labels = new ArrayList<>();
+        final List<Runnable> acts = new ArrayList<>();
+        StringBuilder sub = new StringBuilder("Installed " + u.installed() + (u.lastCheck() > 0 ? ". Checked " + ago(u.lastCheck()) + "." : ". Not checked yet."));
+        if (r != null) {
+            sub.append("\nNew: ").append(r.tag.replaceFirst("^v", "")).append(r.size > 0 ? " (" + UpdateRules.size(r.size) + ")" : "");
+            String n = UpdateRules.notes(r.body, 3, 260);
+            if (!n.isEmpty()) sub.append("\n").append(n);
+            if (personal) sub.append("\nThis is a personal build: install the new one yourself so your channel list is kept.");
+        }
+        if (u.lastError() != null && !u.busy()) sub.append("\n").append(u.lastError());
+        if (r != null && !personal) {
+            if (u.downloaded() != null) {
+                labels.add("Install now");
+                acts.add(() -> host.closeSheet(() -> startInstall(u)));
+            } else {
+                labels.add("Download now");
+                acts.add(() -> host.closeSheet(() -> { host.flash("Downloading", "OMNI " + r.tag.replaceFirst("^v", "")); u.download(m -> { host.flash("Update", m); host.refreshAll(null, null); }); }));
+            }
+        }
+        labels.add("Check for updates now");
+        acts.add(() -> host.closeSheet(() -> { host.flash("Checking for updates", "Asking GitHub's public releases"); u.check(m -> { host.flash("Updates", m); host.refreshAll(null, null); }); }));
+        labels.add("Check automatically: " + (u.auto() ? "On" : "Off"));
+        acts.add(() -> host.closeSheet(() -> { u.setAuto(!u.auto()); host.refreshAll(null, null); updatesMenu(); }));
+        labels.add("Include pre-releases: " + (u.pre() ? "On" : "Off"));
+        acts.add(() -> host.closeSheet(() -> { u.setPre(!u.pre()); host.refreshAll(null, null); updatesMenu(); }));
+        labels.add("Close");
+        acts.add(() -> host.closeSheet(null));
+        host.showSheet("Updates", sub.toString(), labels, acts);
+    }
+
+    private void startInstall(Updater u) {
+        android.content.Context c = host.context();
+        if (Build.VERSION.SDK_INT >= 26 && !c.getPackageManager().canRequestPackageInstalls()) {       // the one-time "install unknown apps" switch for OMNI
+            try {
+                c.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:" + c.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                host.flash("Allow OMNI to install updates", "Then press Install now again");
+            } catch (Exception e) { host.flash("Cannot install updates", "This TV has no 'install unknown apps' screen"); }
+            return;
+        }
+        u.install(m -> host.flash("Update", m));
     }
 
     private void showCrash() {

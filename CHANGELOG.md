@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0-rc.10
+* **Updates** (Settings > Updates): OMNI checks GitHub's public releases once a day while the launcher is on screen (off switch included), downloads a newer APK, verifies it (size, SHA-256 from the release notes, same package, newer version, same signing key as the installed OMNI) and hands it to the system installer, which asks you to confirm: Android does not allow a silent self-update. Pre-releases are included until 1.0.0 (a switch). A personal build with its own channel list is told about updates but never replaced. Only `api.github.com` and GitHub's release hosts are contacted; nothing identifying is sent.
+
 ## 1.0.0-rc.9
 * **Crash guard** (from issue #1, a Sony Bravia on Android 14 that crashed on the last Settings page and stayed broken until reinstalled): OMNI now records its own crashes (device, Android version, stack) and shows the last one under Settings > Crash report, so a report can carry it. After two crashes within two minutes it starts in a plain safe mode (no setup card, no background watchers, no idle timer, no media follower) so a crash cannot loop. The cause of that crash is not yet known; the report from RC 9 will show it.
 

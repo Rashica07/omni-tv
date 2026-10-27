@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- lets OMNI hand a verified update to the system installer (which still asks you to confirm) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Package visibility for a launcher: only launchable activities, plus the streaming apps the Watch tab can open. -->
     <queries>
@@ -48,6 +50,7 @@
             android:exported="true"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
         <service android:name=".HdmiOverlay" android:exported="false" />
+        <receiver android:name=".UpdateReceiver" android:exported="false" />
         <!-- optional: only runs if the person turns it on in Accessibility; sees only the buttons assigned in Settings > Remote buttons -->
         <service android:name=".KeyService" android:exported="true" android:label="OMNI remote buttons"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
