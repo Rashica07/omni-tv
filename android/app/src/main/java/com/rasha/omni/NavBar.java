@@ -29,11 +29,11 @@ final class NavBar extends View {
     private static final String[] NAMES = {"Home", "Watch", "Apps", "TV", "Settings"};
 
     // geometry (dp)
-    private static final float H = 56f;
-    private static final float PAD = 6f;
-    private static final float ITEM_H = 44f;
-    private static final float COMPACT_W = 52f;
-    private static final float ICON = 28f;
+    private static final float H = 46f;
+    private static final float PAD = 5f;
+    private static final float ITEM_H = 36f;
+    private static final float COMPACT_W = 44f;
+    private static final float ICON = 23f;
     private static final float GAP = 2f;
 
     private final Listener listener;
@@ -63,9 +63,9 @@ final class NavBar extends View {
             open[i] = i == 0 ? 1f : 0f;
         }
         label.setTypeface(Theme.geist);
-        label.setTextSize(dp(17));
+        label.setTextSize(dp(14));
         wordmark.setTypeface(Theme.geist);
-        wordmark.setTextSize(dp(27));
+        wordmark.setTextSize(dp(20));
         wordmark.setLetterSpacing(0.22f);
         wordmark.setColor(Theme.WHITE);
         if (Build.VERSION.SDK_INT >= 26) {
@@ -95,12 +95,12 @@ final class NavBar extends View {
 
     /** Width this bar needs: the mark, the capsule at its widest (every icon compact plus the longest label). */
     static int widthPx() {
-        return dp(MARK_W + 24 + PAD * 2 + 5 * COMPACT_W + 4 * GAP + 96);
+        return dp(MARK_W + 24 + PAD * 2 + 5 * COMPACT_W + 4 * GAP + 78);
     }
 
     static int heightPx() { return dp(H); }
 
-    private static final float MARK_W = 180f;
+    private static final float MARK_W = 138f;
 
     // ------------------------------------------------------------ input
 
@@ -158,7 +158,7 @@ final class NavBar extends View {
             drawIcon(c, i, x + dp(COMPACT_W) / 2f, cy, fg);
             if (o > 0.05f) {
                 label.setColor(Theme.alpha(fg, (int) (255 * Math.min(1f, Math.max(0f, (o - 0.3f) / 0.7f)))));
-                c.drawText(NAMES[i], x + dp(COMPACT_W) - dp(2), cy + dp(6), label);
+                c.drawText(NAMES[i], x + dp(COMPACT_W) - dp(2), cy + dp(5), label);
             }
             x += iw + dp(GAP);
         }
@@ -168,17 +168,17 @@ final class NavBar extends View {
 
     /** The OMNI mark: a ring open at the lower right with a dot inside, then the wordmark. */
     private void drawMark(Canvas c, float x, float cy) {
-        float s = dp(40), cx = x + s / 2f + dp(2);
+        float s = dp(30), cx = x + s / 2f + dp(2);
         p.setShader(null);
         p.setStyle(Paint.Style.STROKE);
         p.setStrokeCap(Paint.Cap.ROUND);
-        p.setStrokeWidth(dp(5.5f));
+        p.setStrokeWidth(dp(4.2f));
         p.setColor(Theme.WHITE);
         r.set(cx - s / 2f + dp(3), cy - s / 2f + dp(3), cx + s / 2f - dp(3), cy + s / 2f - dp(3));
         c.drawArc(r, -30f, 300f, false, p);
         p.setStyle(Paint.Style.FILL);
-        c.drawCircle(cx, cy, dp(6.5f), p);
-        c.drawText("OMNI", x + s + dp(14), cy + dp(10), wordmark);
+        c.drawCircle(cx, cy, dp(5f), p);
+        c.drawText("OMNI", x + s + dp(11), cy + dp(7.5f), wordmark);
         p.setStrokeCap(Paint.Cap.BUTT);
     }
 

@@ -21,7 +21,7 @@ import static com.rasha.omni.Theme.dp;
  */
 final class Banner extends View {
     static final int MODE_MOVE = 0, MODE_DONE = 1, MODE_CANCEL = 2;
-    static final float H = 56f;
+    static final float H = 46f;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final TextPaint title = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);

@@ -1133,7 +1133,7 @@ public class MainActivity extends Activity implements Host {
         pageHost.setClipChildren(false);
         FrameLayout.LayoutParams ph = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        ph.topMargin = dp(86);
+        ph.topMargin = dp(76);
         ambient.addView(pageHost, ph);
 
         nav = new NavBar(this, this::navSelected);
@@ -1163,7 +1163,7 @@ public class MainActivity extends Activity implements Host {
         });
         FrameLayout.LayoutParams npp = new FrameLayout.LayoutParams(NowPlayingView.widthPx(), NowPlayingView.heightPx(), NowPlayingView.gravity());
         npp.rightMargin = dp(Theme.SAFE_SIDE);
-        npp.topMargin = dp(98);
+        npp.topMargin = dp(88);
         ambient.addView(nowPlaying, npp);
 
         hintView = Theme.text(new TextView(this), 13, Theme.TEXT3, 500);

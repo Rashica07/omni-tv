@@ -31,7 +31,7 @@ final class StatusBar extends View {
     interface Listener { void onActivate(int zone); }
 
     static final int NET = 0, WEATHER = 1, ACCOUNT = 2;
-    private static final float H = 56f, ZONE_H = 44f, NET_W = 38f, WX_W = 68f, ACC_W = 38f, PAD = 6f, GAP = 2f, CLOCK_W = 78f;
+    private static final float H = 46f, ZONE_H = 36f, NET_W = 32f, WX_W = 58f, ACC_W = 32f, PAD = 5f, GAP = 2f, CLOCK_W = 64f;
 
     private final Listener listener;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -65,10 +65,10 @@ final class StatusBar extends View {
         listener = l;
         setFocusable(true);
         for (TextPaint t : new TextPaint[]{time, temp, date}) t.setTypeface(Theme.geist);
-        time.setTextSize(dp(23));
+        time.setTextSize(dp(19));
         time.setColor(Theme.WHITE);
-        temp.setTextSize(dp(18));
-        date.setTextSize(dp(11.5f));
+        temp.setTextSize(dp(15));
+        date.setTextSize(dp(10));
         date.setColor(Theme.TEXT2);
         if (Build.VERSION.SDK_INT >= 26) {
             time.setFontVariationSettings("'wght' 650");
@@ -190,7 +190,7 @@ final class StatusBar extends View {
             float sel = filled * Math.max(0f, 1f - Math.abs(zoneX - z));
             int fg = Theme.lerp(Theme.TEXT2, Theme.BLACK, sel);
             if (sel < 0.5f) fg = Theme.lerp(Theme.TEXT2, Theme.WHITE, 0.55f);       // unfocused glyphs stay readable, not dim
-            float left = zoneLeft(z), cx = left + (z == 1 ? dp(24) : zoneWidth(z) / 2f);
+            float left = zoneLeft(z), cx = left + (z == 1 ? dp(20) : zoneWidth(z) / 2f);
             if (z == NET) drawNet(c, cx, cy, fg, sel);
             else if (z == WEATHER) drawWeather(c, left, cx, cy, fg);
             else drawAccount(c, cx, cy, fg);
@@ -199,14 +199,14 @@ final class StatusBar extends View {
         // divider and clock
         float dx = zoneLeft(2) + dp(ACC_W) + dp(5);
         p.setColor(Theme.alpha(Theme.WHITE, 40));
-        c.drawRect(dx, cy - dp(14), dx + 1, cy + dp(14), p);
+        c.drawRect(dx, cy - dp(11), dx + 1, cy + dp(11), p);
         float cx = dx + dp(10);
-        c.drawText(timeText, cx, cy + dp(2), time);
-        c.drawText(dateText, cx, cy + dp(16), date);
+        c.drawText(timeText, cx, cy + dp(1), time);
+        c.drawText(dateText, cx, cy + dp(13), date);
     }
 
     private void drawNet(Canvas c, float cx, float cy, int fg, float sel) {
-        float u = dp(22) / 24f;
+        float u = dp(18) / 24f;
         ink.setColor(fg);
         ink.setStrokeWidth(2.1f * u);
         ink.setStyle(Paint.Style.STROKE);
