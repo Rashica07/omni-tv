@@ -41,6 +41,8 @@ public class MainActivity extends Activity implements Host {
     private FrameLayout pageHost;
     private NowPlayingView nowPlaying;
     private final Runnable idleCheck = this::maybeAmbient;
+    /** After repeated crashes the launcher starts plain: no setup card, no watchers, no idle timer, no media follower. */
+    private boolean safeMode;
     private com.rasha.omni.common.NowPlayingSource media;
     private NavBar nav;
     private StatusBar status;
@@ -707,6 +709,7 @@ public class MainActivity extends Activity implements Host {
     /** Optional idle ambient: after the chosen minutes without a remote key on the launcher, the ambient display starts. Off by default (Gallery settings). */
     private void armIdle() {
         ui.removeCallbacks(idleCheck);
+        if (safeMode) return;
         int m = new com.rasha.omni.gallery.GallerySettings(this).getIdleMin();
         if (m > 0) ui.postDelayed(idleCheck, m * 60_000L);
     }
@@ -728,6 +731,7 @@ public class MainActivity extends Activity implements Host {
     }
 
     private void startMedia() {
+        if (safeMode) return;
         if (media == null) media = new com.rasha.omni.common.NowPlayingSource(this, new ComponentName(this, MediaListener.class), t -> { nowPlayingChanged(t); return kotlin.Unit.INSTANCE; });
         media.start();
     }
@@ -918,6 +922,7 @@ public class MainActivity extends Activity implements Host {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         Theme.init(this);
+        safeMode = CrashGuard.safeMode(this);
         getWindow().setBackgroundDrawable(new ColorDrawable(Theme.BG));
         repo = new AppRepo(this);
         images = new Images(this);
@@ -927,13 +932,12 @@ public class MainActivity extends Activity implements Host {
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> ambient.setSharp(newF instanceof ShelfStack || newF instanceof Welcome.Card));   // the welcome card sits on the crisp photograph
         wallpaper = new Wallpaper(this, ambient);
         wallpaper.apply();                                             // off the UI thread; the ground is near-black until it fades in
-        ui.postDelayed(() -> wallpaper.refreshIfDue(false), 6000);     // the network never delays startup
+        if (!safeMode) ui.postDelayed(() -> wallpaper.refreshIfDue(false), 6000);     // the network never delays startup
         net = new NetState(this);
         net.start(() -> ui.post(() -> { pushStatus(); netEvent(); }));
         netWasOnline = net.transport != NetKind.NONE && net.validated ? Boolean.TRUE : (net.transport == NetKind.NONE ? Boolean.FALSE : null);      // an unvalidated link at start is unknown, not news
         watchInputs();
-        devices = new DeviceWatch(this, e -> ui.post(() -> deviceEvent(e)));
-        devices.start();
+        if (!safeMode) { devices = new DeviceWatch(this, e -> ui.post(() -> deviceEvent(e))); devices.start(); }
         pushStatus();
         refreshWeather(false);
         if (PtvServer.base(this) != null) checkServer(false);
@@ -944,7 +948,8 @@ public class MainActivity extends Activity implements Host {
         pages[4] = new SettingsPage(this);
         selectTab(0);
         rescan();
-        if (!getSharedPreferences("omni", MODE_PRIVATE).getBoolean("setup_done", false)) ui.postDelayed(this::openWelcome, 700);     // first run
+        if (safeMode) ui.postDelayed(() -> flash("Safe mode", "OMNI crashed a few times. Settings > Crash report has the details"), 1500);
+        else if (!getSharedPreferences("omni", MODE_PRIVATE).getBoolean("setup_done", false)) ui.postDelayed(this::openWelcome, 700);     // first run
     }
 
     /** Asks for READ_TV_LISTINGS once (a runtime permission); declining is respected and never nagged. */

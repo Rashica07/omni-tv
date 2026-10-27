@@ -59,6 +59,7 @@ final class SettingsPage extends Page {
         list.addView(item("Server", "Home server status", false, () -> openOwn("com.rasha.omni.server.ServerActivity")));
         list.addView(item("Gallery", "Photos, videos, ambient display settings", false, () -> openOwn("com.rasha.omni.gallery.GalleryActivity")));
         list.addView(item("Ambient display", "Start the photograph and clock now", false, () -> openOwn("com.rasha.omni.gallery.SlideshowActivity")));
+        if (CrashGuard.report(host.context()) != null) list.addView(item("Crash report", "What OMNI recorded when it last crashed", false, this::showCrash));
         for (int i = 0; i < NAMES.length; i++) {
             final String action = ACTIONS[i];
             list.addView(item(NAMES[i], DESC[i], false, () -> openSetting(action)));
@@ -142,6 +143,21 @@ final class SettingsPage extends Page {
     private void openOwn(String className) {
         try { host.context().startActivity(new Intent().setClassName(host.context().getPackageName(), className)); }
         catch (Exception e) { Toast.makeText(host.context(), "Not available", Toast.LENGTH_SHORT).show(); }
+    }
+
+    private void showCrash() {
+        String r = CrashGuard.report(host.context());
+        if (r == null) return;
+        final List<String> labels = new ArrayList<>();
+        final List<Runnable> acts = new ArrayList<>();
+        labels.add("Close");
+        acts.add(() -> host.closeSheet(null));
+        labels.add("Clear the report");
+        acts.add(() -> host.closeSheet(() -> { CrashGuard.clear(host.context()); host.refreshAll(null, null); }));
+        String[] ls = r.split("\n");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < Math.min(ls.length, 9); i++) sb.append(ls[i].length() > 110 ? ls[i].substring(0, 110) : ls[i]).append('\n');
+        host.showSheet("Last crash", sb + "Photograph this or paste it into a GitHub issue.", labels, acts);
     }
 
     private void openSetting(String action) {

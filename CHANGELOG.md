@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0-rc.9
+* **Crash guard** (from issue #1, a Sony Bravia on Android 14 that crashed on the last Settings page and stayed broken until reinstalled): OMNI now records its own crashes (device, Android version, stack) and shows the last one under Settings > Crash report, so a report can carry it. After two crashes within two minutes it starts in a plain safe mode (no setup card, no background watchers, no idle timer, no media follower) so a crash cannot loop. The cause of that crash is not yet known; the report from RC 9 will show it.
+
 ## 1.0.0-rc.8
 * **Gallery redesigned**: an ambient display (full-screen photograph, oversized thin clock placed in the quietest part of each photograph, date, credit, slow drift and cross-fade) and a gallery (Photos and Videos grids, full-screen viewer). Minimal and expressive clock styles.
 * **Bing's daily photograph** as a source, with title, description, credit and date; cached and refreshed at most twice a day, kept offline. Isolated behind a replaceable provider.

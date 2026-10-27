@@ -2,8 +2,8 @@ package com.rasha.omni;
 
 public final class RunAll {
     public static void main(String[] args) {
-        String[] names = {"Accordion", "SpringMath", "ListOps", "AppFilter", "CategoryRules", "Inputs", "Ptv", "PtvCatalog", "PreviewPolicy", "Colour", "Wallpaper", "WeatherFormat", "ControlRows", "SearchHit", "EventRules", "SetupFlow", "Intents", "KeyMap"};
-        Runnable[] tests = {AccordionTest::run, SpringMathTest::run, ListOpsTest::run, AppFilterTest::run, CategoryRulesTest::run, InputsTest::run, PtvTest::run, PtvCatalogTest::run, PreviewPolicyTest::run, ColourTest::run, WallpaperTest::run, WeatherFormatTest::run, ControlRowsTest::run, SearchHitTest::run, EventRulesTest::run, SetupFlowTest::run, IntentsTest::run, KeyMapTest::run};
+        String[] names = {"Accordion", "SpringMath", "ListOps", "AppFilter", "CategoryRules", "Inputs", "Ptv", "PtvCatalog", "PreviewPolicy", "Colour", "Wallpaper", "WeatherFormat", "ControlRows", "SearchHit", "EventRules", "SetupFlow", "Intents", "KeyMap", "CrashRules"};
+        Runnable[] tests = {AccordionTest::run, SpringMathTest::run, ListOpsTest::run, AppFilterTest::run, CategoryRulesTest::run, InputsTest::run, PtvTest::run, PtvCatalogTest::run, PreviewPolicyTest::run, ColourTest::run, WallpaperTest::run, WeatherFormatTest::run, ControlRowsTest::run, SearchHitTest::run, EventRulesTest::run, SetupFlowTest::run, IntentsTest::run, KeyMapTest::run, CrashRulesTest::run};
         int failed = 0;
         for (int i = 0; i < tests.length; i++) {
             try { tests[i].run(); System.out.println("PASS " + names[i]); }

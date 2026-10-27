@@ -21,6 +21,7 @@ public class OmniApp extends Application {
 
     @Override public void onCreate() {
         super.onCreate();
+        CrashGuard.install(this);                                      // every process records its own crash; see CrashGuard
         String p = processName();
         if (!(p.endsWith(":cinema") || p.endsWith(":weather") || p.endsWith(":server"))) return;
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
