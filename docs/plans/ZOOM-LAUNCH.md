@@ -1,6 +1,6 @@
 # Plan: "open small, zoom to full screen while it loads" (apps and HDMI), then the port to other TV platforms
 
-Status: **plan only, nothing built.** Rule: a plan like this comes before any big feature.
+Status: **Android phases 1-4 built in rc.13, off by default** (Settings > Zoom when opening; needs "draw over other apps"). Built: motion tokens (`docs/design/MOTION.md`), `ZoomRules` (tested), `LaunchShell` (grow, dissolve when the launcher is stopped, hard limit, cancel on return), system animation switched off while it runs, setting. **Not built yet:** HDMI through the same shell (HDMI already grows from a small preview), pre-warming our own apps, an accessibility-based "app is up" signal, reversing the zoom when Back is pressed mid-grow (the shell does not take keys), the Watch Next items path, the jank harness. **Not measured on the TV**: frame times. The web ports (section 7) are not started. Rule: a plan like this comes before any big feature.
 
 ## 1. What you asked for
 Click YouTube (or an HDMI input): it appears **small, in place of the tile**, already loading, and **grows smoothly to full screen**. No cut, no black flash, on every platform OMNI runs on.

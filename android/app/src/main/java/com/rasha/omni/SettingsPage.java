@@ -58,6 +58,7 @@ final class SettingsPage extends Page {
         list.addView(item("Welcome & setup", "Run the setup again", false, host::openWelcome));
         list.addView(item("Language", Tr.NAMES[Tr.lang], false, host::chooseLanguage));
         list.addView(item("Simple mode", UserMode.simple(host.context()) ? "On" : "Off", false, host::toggleSimple));
+        list.addView(item("Zoom when opening", UserMode.zoom(host.context()) ? "On" : "Off", false, host::toggleZoom));
         list.addView(item("Quick access", "Choose what is on your Home row", false, host::openQuickAccess));
         list.addView(item("Remote buttons", "INFO, colour keys, mic", false, host::openRemoteButtons));
         if (!UserMode.simple(host.context())) list.addView(item("Server", "Home server status", false, () -> openOwn("com.rasha.omni.server.ServerActivity")));

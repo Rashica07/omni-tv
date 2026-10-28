@@ -35,6 +35,7 @@ interface Host {
     /** Settings: choose the language / switch Simple mode / pick the apps on the Home row. */
     void chooseLanguage();
     void toggleSimple();
+    void toggleZoom();
     void openQuickAccess();
     /** Moves focus to the Now Playing pill when it is showing; false (and focus stays) when it is not. */
     boolean focusNowPlaying();

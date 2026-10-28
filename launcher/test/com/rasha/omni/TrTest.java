@@ -22,6 +22,9 @@ final class TrTest {
         T.ok("1 canale".equals(Tr.count(1, "channel", "channels")) && "3 canali".equals(Tr.count(3, "channel", "channels")), "Italian singular and plural");
         Tr.lang = 0;
         T.ok(Tr.fromSystem("sq") == 1 && Tr.fromSystem("sq-AL") == 1 && Tr.fromSystem("it-CH") == 2 && Tr.fromSystem("de-CH") == 3 && Tr.fromSystem("gsw") == 3 && Tr.fromSystem("fr") == 0 && Tr.fromSystem(null) == 0, "system language to ours");
+        T.ok(Tr.initial(2, "sq", true) == 2 && Tr.initial(0, "it", false) == 0, "a saved choice always wins");
+        T.ok(Tr.initial(-1, "it-IT", false) == 2 && Tr.initial(-1, "sq", false) == 1 && Tr.initial(-1, "fr", false) == 0, "a first run follows the TV's language");
+        T.ok(Tr.initial(-1, "it-IT", true) == 0, "an install that already finished its setup is not switched by an update");
         for (String s : SetupFlow.TITLES) T.ok(Tr.has(s), "every setup title is translated: " + s);
         for (String s : new String[]{"Home", "Watch", "Apps", "TV", "Settings"}) T.ok(Tr.has(s), "navigation is translated: " + s);
         for (String s : TvToolbarKeys.FILTERS) T.ok(Tr.has(s), "filters are translated: " + s);

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.13
+* **Zoom when opening** (Settings; **off by default**): an app grows from its tile to full screen while it loads, instead of the system's plain scale-up. It hides the load rather than shortening it (Android always lays an app out at full size) and needs the "draw over other apps" permission. Motion numbers are in `docs/design/MOTION.md`.
+* An update never changes the language of an install that already finished its setup (it stays English until you choose).
+
 ## 1.0.0-rc.12
 * **Simple mode** (no home server): chosen in the first-run setup (the default for new installs) or under Settings > Simple mode. It hides the Server screen and rows and server polling, and the setup skips the server step. Existing installs keep everything.
 * **Languages**: English, Albanian (Shqip), Italian and Swiss Standard German, chosen at first run or under Settings > Language (the TV's own language is used until then). Covers navigation, Home, Live TV, Settings, the setup, quick access and the remote-button screens; translations are machine-written and need native review (`docs/TRANSLATIONS.md`).

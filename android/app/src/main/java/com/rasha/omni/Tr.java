@@ -30,6 +30,15 @@ final class Tr {
         return 0;
     }
 
+    /**
+     * The language to start in. A saved choice always wins. With none, a first run follows the TV's language, but an install that already finished its
+     * setup stays English until the person chooses: an update must never change the language of a screen they already know.
+     */
+    static int initial(int saved, String systemTag, boolean setupDone) {
+        if (saved >= 0 && saved < CODES.length) return saved;
+        return setupDone ? 0 : fromSystem(systemTag);
+    }
+
     static String t(String en) {
         if (lang <= 0 || en == null) return en;
         String[] v = M.get(en);
@@ -190,6 +199,10 @@ final class Tr {
         p("Assistant", "Asistenti", "Assistente", "Assistent");
         p("Search", "Kërko", "Cerca", "Suchen");
         p("OMNI Cinema", "OMNI Cinema", "OMNI Cinema", "OMNI Cinema");
+        p("Zoom when opening", "Zmadhim kur hapet", "Zoom all'apertura", "Zoom beim Öffnen");
+        p("Allow drawing over other apps", "Lejo vizatimin mbi aplikacionet e tjera", "Consenti di disegnare sopra le altre app", "Zeichnen über anderen Apps erlauben");
+        p("Then the zoom works", "Pastaj zmadhimi funksionon", "Poi lo zoom funziona", "Dann funktioniert der Zoom");
+        p("This TV hides that setting", "Ky TV e fsheh këtë cilësim", "Questa TV nasconde questa impostazione", "Dieser Fernseher versteckt diese Einstellung");
         p("Language changed", "Gjuha u ndryshua", "Lingua cambiata", "Sprache geändert");
     }
 }

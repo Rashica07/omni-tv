@@ -116,11 +116,14 @@ public class MainActivity extends Activity implements Host {
         ambient.boost(true);                                           // the app's colour intensifies as it opens
         final Intent it = Intent.makeMainActivity(a.cn)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        final ActivityOptions o = ActivityOptions.makeScaleUpAnimation(src, x, y, w, h);
+        // the zoom launch: a shell grows from the tile while the app starts behind it (off by default; docs/plans/ZOOM-LAUNCH.md)
+        final boolean zoom = ZoomRules.usable(UserMode.zoom(this), Settings.canDrawOverlays(this), Theme.reduceMotion)
+                && LaunchShell.start(this, new android.graphics.RectF(loc[0] + x, loc[1] + y, loc[0] + x + w, loc[1] + y + h), a.art == null ? null : a.art.tile, a.art == null ? null : a.art.icon, a.art != null && a.art.kind == IconArt.Kind.BANNER, a.color);
+        final ActivityOptions o = zoom ? ActivityOptions.makeCustomAnimation(this, 0, 0) : ActivityOptions.makeScaleUpAnimation(src, x, y, w, h);
         ui.postDelayed(() -> {
             try { startActivity(it, o.toBundle()); }
-            catch (Exception e) { Toast.makeText(this, "Can't open " + a.label, Toast.LENGTH_SHORT).show(); }
-        }, 140);
+            catch (Exception e) { LaunchShell.cancel(); Toast.makeText(this, "Can't open " + a.label, Toast.LENGTH_SHORT).show(); }
+        }, zoom ? 60 : 140);
     }
 
     @Override public void appMenu(final AppRepo.App a, final String listId) {
@@ -555,6 +558,16 @@ public class MainActivity extends Activity implements Host {
         UserMode.setSimple(this, on);
         flash(Tr.t("Simple mode"), on ? "No server, only what you use" : "Everything is back");
         if (on) { serverChecked = false; serverStatus = new PtvServer.Status(); pushStatus(); }
+        refreshAll(null, null);
+    }
+
+    @Override public void toggleZoom() {
+        boolean on = !UserMode.zoom(this);
+        UserMode.setZoom(this, on);
+        if (on && !Settings.canDrawOverlays(this)) {                         // the zoom window is the same permission as the HDMI picture
+            try { startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))); flash(Tr.t("Allow drawing over other apps"), Tr.t("Then the zoom works")); }
+            catch (Exception e) { flash(Tr.t("This TV hides that setting"), "appops set " + getPackageName() + " SYSTEM_ALERT_WINDOW allow"); }
+        } else flash(Tr.t("Zoom when opening"), Tr.t(on ? "On" : "Off"));
         refreshAll(null, null);
     }
 
@@ -1140,6 +1153,7 @@ public class MainActivity extends Activity implements Host {
 
     @Override protected void onStop() {
         super.onStop();
+        LaunchShell.appReady();                                        // the launcher is hidden: the app is on screen, so the zoom shell may dissolve
         if (media != null) media.stop();                               // no session callbacks while the launcher is not on screen
         try { unregisterReceiver(pkgReceiver); } catch (Exception ignored) { }
     }
@@ -1148,6 +1162,7 @@ public class MainActivity extends Activity implements Host {
 
     @Override protected void onResume() {
         super.onResume();
+        LaunchShell.cancel();                                          // back on the launcher: no shell may stay over it
         HdmiOverlay.launcherResumed = true;
         if (cur >= 0 && pages[cur] != null) pages[cur].onResume();
         if (welcome != null) welcome.refresh();                       // back from a system screen the setup opened
