@@ -25,6 +25,9 @@ import android.widget.FrameLayout;
  */
 public class HdmiOverlay extends Service {
     static volatile boolean launcherResumed, viewerResumed, fullscreen;
+    /** Set by the full-screen viewer: called (on the main thread) when this window goes away for any reason, so no empty viewer is ever left over the launcher. */
+    static volatile Runnable gone;
+    private final Runnable autoStop = this::stopSelf;
     static final String EXTRA_KEEP = "omni_keep", ACTION_STOP = "stop", ACTION_EXPAND = "expand", ACTION_PANEL = "panel";
     static final String EXTRA_INPUT = "input", EXTRA_X = "x", EXTRA_Y = "y", EXTRA_W = "w", EXTRA_H = "h", EXTRA_SECONDS = "s", EXTRA_NAME = "name", EXTRA_PORT = "port";
 
@@ -134,13 +137,16 @@ public class HdmiOverlay extends Service {
         ui.postDelayed(watch, 500);
         ui.removeCallbacks(ensureVideo);
         ui.postDelayed(ensureVideo, 5000);                               // by then the TV maker's app has had its turn
-        ui.postDelayed(this::stopSelf, i.getIntExtra(EXTRA_SECONDS, 600) * 1000L);
+        ui.removeCallbacks(autoStop);
+        long limit = HdmiRules.autoStopMs(full, i.getIntExtra(EXTRA_SECONDS, HdmiRules.DEFAULT_PREVIEW_SECONDS));
+        if (limit > 0) ui.postDelayed(autoStop, limit);                 // only a card preview has a timer; see HdmiRules
     }
 
     /** Grows the window the picture is already in to the whole screen and shows the panel on top of it. No second tune: the picture keeps playing through the move. */
     private void expand(String name, String port) {
         if (holder == null || lp == null) return;
         fullscreen = true;
+        ui.removeCallbacks(autoStop);                                  // the preview's timer ends here: a full-screen picture is closed by the person, not by a clock
         tv.setStreamVolume(1f);                                       // the preview is muted; the full-screen view has sound
         if (panel == null) {
             panel = new PlayerActivity.Panel(this);
@@ -200,6 +206,8 @@ public class HdmiOverlay extends Service {
         ui.removeCallbacksAndMessages(null);
         remove();
         fullscreen = false;
+        Runnable g = gone;
+        if (g != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(g);
         super.onDestroy();
     }
 }

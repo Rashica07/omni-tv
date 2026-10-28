@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.11
+* **Fix: the HDMI picture no longer ends after 10 minutes.** The preview's 10-minute timer kept running after the picture went full screen; when it fired the picture disappeared and the empty viewer left on top of the launcher looked like a crash until Home was pressed. A full-screen picture now has no timer (it ends when you leave), and if the picture window ever goes away the empty viewer closes with it.
+* Roadmap: Tizen, webOS, Titan OS and VIDAA web-app ports, and a no-server "Simple mode".
+
 ## 1.0.0-rc.10
 * **Updates** (Settings > Updates): OMNI checks GitHub's public releases once a day while the launcher is on screen (off switch included), downloads a newer APK, verifies it (size, SHA-256 from the release notes, same package, newer version, same signing key as the installed OMNI) and hands it to the system installer, which asks you to confirm: Android does not allow a silent self-update. Pre-releases are included until 1.0.0 (a switch). A personal build with its own channel list is told about updates but never replaced. Only `api.github.com` and GitHub's release hosts are contacted; nothing identifying is sent.
 

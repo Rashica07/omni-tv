@@ -49,6 +49,7 @@ public class HdmiViewerActivity extends Activity {
         if (overlayMode) {
             root.setBackgroundColor(0x00000000);                      // transparent: the picture is the overlay window above this one
             setContentView(root);
+            HdmiOverlay.gone = () -> { if (!isFinishing()) finish(); };       // if the picture window ends for any reason, this empty screen must not stay over the launcher
             startService(new Intent(this, HdmiOverlay.class).setAction(HdmiOverlay.ACTION_EXPAND).putExtra(HdmiOverlay.EXTRA_INPUT, inputId)
                     .putExtra(HdmiOverlay.EXTRA_NAME, name).putExtra(HdmiOverlay.EXTRA_PORT, port));
             return;
@@ -98,6 +99,7 @@ public class HdmiViewerActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        HdmiOverlay.gone = null;
         ui.removeCallbacksAndMessages(null);
         if (tv != null) tv.reset();
         super.onDestroy();
