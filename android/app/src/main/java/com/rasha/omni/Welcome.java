@@ -43,6 +43,17 @@ final class Welcome extends FrameLayout {
         boolean sessions();
         void askSessions();
         void finished(boolean completed, int step);
+        boolean simple();
+        void setSimple(boolean simple);
+        boolean tuner();
+        /** One line about the antenna: how many channels the TV has and from which countries, or that there are none yet. */
+        String antenna();
+        void scanAntenna();
+        /** The language was changed on the Language step: the launcher restarts itself and comes back to the next step. */
+        void languageChanged(int nextStep);
+        /** Ends the setup and opens the quick-access app picker / the remote-button list. */
+        void pickApps();
+        void pickButtons();
     }
 
     private static final float CARD_W = 620f, CARD_H = 380f, PAD = 36f, BTN_H = 48f, BTN_GAP = 12f;
@@ -149,6 +160,7 @@ final class Welcome extends FrameLayout {
         private String heading = "", statusText = "";
         private boolean statusOk;
         private int focus;
+        private boolean simpleNow, tunerNow;          // read once per step: onDraw must not ask the system each frame
         private float hx, hy, hw, hh;
         private final Spring sx = new Spring(520f, 0.84f, 0f, 0.1f, v -> { hx = v; invalidate(); });
         private final Spring sy = new Spring(520f, 0.84f, 0f, 0.1f, v -> { hy = v; invalidate(); });
@@ -179,10 +191,20 @@ final class Welcome extends FrameLayout {
         void rebuild(boolean animate) {
             String keep = !animate && focus < buttons.size() ? buttons.get(focus).id : null;
             buttons.clear();
-            heading = SetupFlow.TITLES[step];
+            simpleNow = actions.simple(); tunerNow = actions.tuner();
+            heading = Tr.t(SetupFlow.TITLES[step]);
             String text;
             statusText = ""; statusOk = false;
             switch (step) {
+                case SetupFlow.LANGUAGE:
+                    text = "Choose your language.";
+                    for (int i = 0; i < Tr.NAMES.length; i++) { Btn b = new Btn(); b.id = "lang:" + i; b.label = Tr.NAMES[i] + (i == Tr.lang ? "  ✓" : ""); b.done = i == Tr.lang; buttons.add(b); }
+                    add("next", "Next");
+                    break;
+                case SetupFlow.MODE:
+                    text = "Simple: no server, just your TV, your channels and your apps. Full: everything, including a home server for films and the Server screen. You can change this later in Settings.";
+                    add("mode:s", actions.simple() ? "Simple  ✓" : "Simple"); add("mode:f", !actions.simple() ? "Full  ✓" : "Full");
+                    break;
                 case SetupFlow.WELCOME:
                     text = "Explore your TV to its maximum potential.";
                     add("start", "Let's start"); add("skip", "Skip setup");
@@ -216,6 +238,16 @@ final class Welcome extends FrameLayout {
                     statusText = w == null ? "No place chosen yet" : w;
                     add("place", w == null ? "Choose place" : "Change place"); add("next", "Next");
                     break;
+                case SetupFlow.ANTENNA:
+                    text = "Your TV has an antenna tuner. OMNI finds the channels the TV has scanned and sorts them by country. If there are none yet, the TV's own scan finds them.";
+                    statusText = actions.antenna();
+                    statusOk = !statusText.isEmpty() && !statusText.startsWith("No ");
+                    add("scan", "Scan for antenna channels"); add("next", "Next");
+                    break;
+                case SetupFlow.QUICK:
+                    text = "Choose what is in your quick access row on Home: apps, or channels and inputs on a remote button. You can change it any time in Settings.";
+                    add("apps", "Choose apps"); add("buttons", "Set remote buttons"); add("next", "Next");
+                    break;
                 case SetupFlow.PERMISSIONS:
                     text = "Listings fill Continue watching from your apps. HDMI lets inputs play live inside OMNI and shows notices over other apps. Mic is for the assistant. Casting lets OMNI notice when a phone casts to this TV. Each is optional.";
                     addDone("listings", "Listings", actions.listings());
@@ -228,6 +260,7 @@ final class Welcome extends FrameLayout {
                     text = "INFO opens the Control Center.  Hold OK on anything for options.  The mic button talks to the assistant.  Settings has this setup again.";
                     add("finish", "Start using OMNI");
             }
+            text = Tr.t(text); statusText = Tr.t(statusText);
             int bw = Math.max(1, getWidth() - dp(PAD) * 2);
             if (step == SetupFlow.WELCOME) { body.setTextSize(dp(18)); body.setColor(Theme.TEXT2); }
             else { body.setTextSize(dp(15)); body.setColor(Theme.TEXT2); }
@@ -240,8 +273,8 @@ final class Welcome extends FrameLayout {
             invalidate();
         }
 
-        private void add(String id, String label) { Btn b = new Btn(); b.id = id; b.label = label; buttons.add(b); }
-        private void addDone(String id, String label, boolean done) { Btn b = new Btn(); b.id = id; b.label = done ? label + "  ✓" : label; b.done = done; buttons.add(b); }
+        private void add(String id, String label) { Btn b = new Btn(); b.id = id; b.label = Tr.t(label.replace("  ✓", "")) + (label.endsWith("  ✓") ? "  ✓" : ""); buttons.add(b); }
+        private void addDone(String id, String label, boolean done) { Btn b = new Btn(); b.id = id; b.label = done ? Tr.t(label) + "  ✓" : Tr.t(label); b.done = done; buttons.add(b); }
 
         private void layoutButtons() {
             float total = 0;
@@ -308,12 +341,12 @@ final class Welcome extends FrameLayout {
                 c.restore();
             }
             // progress dots and the quiet hint line
-            int[] d = SetupFlow.dots(step);
+            int[] d = SetupFlow.dots(step, simpleNow, tunerNow);
             float by = getHeight() - dp(20);
             if (d != null) {
                 float gap = dp(14), x0 = cx - gap * (d[1] - 1) / 2f;
                 for (int i = 0; i < d[1]; i++) { p.setColor(i == d[0] ? Theme.WHITE : 0x55FFFFFF); c.drawCircle(x0 + gap * i, by, i == d[0] ? dp(3.5f) : dp(3), p); }
-                hint.setTextAlign(Paint.Align.RIGHT); c.drawText("Back: previous step", getWidth() - dp(PAD), by + dp(4), hint);
+                hint.setTextAlign(Paint.Align.RIGHT); c.drawText(Tr.t("Back: previous step"), getWidth() - dp(PAD), by + dp(4), hint);
             }
         }
 
@@ -345,7 +378,7 @@ final class Welcome extends FrameLayout {
                     if (e.getRepeatCount() == 0 && !buttons.isEmpty()) activate(buttons.get(Math.min(focus, buttons.size() - 1)).id);
                     return true;
                 case KeyEvent.KEYCODE_BACK:
-                    if (step != SetupFlow.WELCOME) go(SetupFlow.back(step));
+                    if (step != SetupFlow.WELCOME) go(SetupFlow.back(step, actions.simple(), actions.tuner()));
                     return true;
                 default: return super.onKeyDown(code, e);
             }
@@ -354,7 +387,11 @@ final class Welcome extends FrameLayout {
         private void activate(String id) {
             OmniLog.state("welcome activate=" + id + " step=" + step);
             switch (id) {
-                case "start": case "next": go(SetupFlow.next(step)); break;
+                case "start": case "next": go(SetupFlow.next(step, actions.simple(), actions.tuner())); break;
+                case "mode:s": case "mode:f": actions.setSimple(id.equals("mode:s")); go(SetupFlow.next(step, actions.simple(), actions.tuner())); break;
+                case "scan": actions.scanAntenna(); break;
+                case "apps": actions.pickApps(); break;
+                case "buttons": actions.pickButtons(); break;
                 case "skip": dismiss(false); break;
                 case "finish": dismiss(true); break;
                 case "home": actions.chooseHome(); break;
@@ -365,6 +402,7 @@ final class Welcome extends FrameLayout {
                 case "mic": if (!actions.mic()) actions.askMic(); break;
                 case "sessions": if (!actions.sessions()) actions.askSessions(); break;
                 default:
+                    if (id.startsWith("lang:")) { try { Tr.lang = Integer.parseInt(id.substring(5)); actions.languageChanged(SetupFlow.MODE); } catch (NumberFormatException ignored) { } break; }
                     if (id.startsWith("use:")) { actions.useServer(id.substring(4)); scanText = ""; found = new ArrayList<>(); rebuild(false); }
             }
         }

@@ -21,8 +21,8 @@ import static com.rasha.omni.Theme.dp;
 final class TvToolbar extends View {
     interface Listener { void onSearch(); void onFilter(int filter); void onSortNext(); void onUp(); void onDown(); }
 
-    static final String[] FILTERS = {"All", "Kosovo", "Albania", "Antenna", "Favorites"};
-    static final String[] SORTS = {"Recent", "Most watched", "A to Z"};
+    static final String[] FILTERS = TvToolbarKeys.FILTERS;
+    static final String[] SORTS = TvToolbarKeys.SORTS;
     private static final float H = 44f, PAD = 13f, GAP = 2f, ICON = 18f;
     private static final int ZONES = 7;                      // 0 search, 1..5 filters, 6 sort
 
@@ -45,8 +45,8 @@ final class TvToolbar extends View {
         text.setTextSize(dp(15));
         if (Build.VERSION.SDK_INT >= 26) text.setFontVariationSettings("'wght' 600");
         w[0] = dp(ICON);
-        for (int i = 0; i < 5; i++) w[i + 1] = text.measureText(FILTERS[i]);
-        w[6] = text.measureText("Sort: " + SORTS[0]);          // refitted to the chosen sort in set(), so the bar is never wider than its text
+        for (int i = 0; i < 5; i++) w[i + 1] = text.measureText(Tr.t(FILTERS[i]));
+        w[6] = text.measureText(Tr.t("Sort") + ": " + Tr.t(SORTS[0]));          // refitted to the chosen sort in set(), so the bar is never wider than its text
         p.setStrokeCap(Paint.Cap.ROUND);
     }
 
@@ -54,7 +54,7 @@ final class TvToolbar extends View {
 
     void set(int filter, int sort) {
         this.filter = filter; this.sort = sort;
-        float sw = text.measureText("Sort: " + SORTS[sort]);
+        float sw = text.measureText(Tr.t("Sort") + ": " + Tr.t(SORTS[sort]));
         if (sw != w[6]) { w[6] = sw; requestLayout(); }
         invalidate();
     }
@@ -118,7 +118,7 @@ final class TvToolbar extends View {
                 c.drawCircle(tx + u * 0.42f, iy + u * 0.42f, u * 0.32f, p);
                 c.drawLine(tx + u * 0.66f, iy + u * 0.66f, tx + u * 0.95f, iy + u * 0.95f, p);
             } else {
-                String s = z == 6 ? "Sort: " + SORTS[sort] : FILTERS[z - 1];
+                String s = z == 6 ? Tr.t("Sort") + ": " + Tr.t(SORTS[sort]) : Tr.t(FILTERS[z - 1]);
                 c.drawText(s, tx, cy + dp(5.5f), text);
                 if (chosen && !foc) {
                     p.setStyle(Paint.Style.FILL);

@@ -1,1 +1,877 @@
-{"schema": 2, "channels": []}
+{
+ "schema": 2,
+ "generated": "2026-10-24",
+ "source": "iptv-org channel/stream database (licence unconfirmed); every stream re-probed here from Italy",
+ "tiers": {
+  "B": "stream host is the broadcaster's own domain or a platform broadcasters use; authorization NOT independently verified",
+  "C": "third-party/bare-IP/unknown host; never enabled by default"
+ },
+ "channels": [
+  {
+   "id": "A2CNN.al",
+   "name": "A2 CNN",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://a2news.com/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://tv.a2news.com/live/smil:a2cnnweb.stream.smil/playlist.m3u8",
+     "quality": null,
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "AlbKanaleMusicTV.al",
+   "name": "AlbKanale Music TV",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "music"
+   ],
+   "website": "https://albportal.net/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://albportal.net/albkanalemusic.m3u8",
+     "quality": "1080p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    },
+    {
+     "url": "https://secured.albportal.net:2083/AlbKanaleMusicTv/index.m3u8",
+     "quality": "1080p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "AlpoTV.al",
+   "name": "Alpo TV",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "general"
+   ],
+   "website": "https://alpomedia.com/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://vs.sednastream.com:1936/alportv/alportv/playlist.m3u8",
+     "quality": null,
+     "probe": "blocked-403",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "CNA.al",
+   "name": "CNA",
+   "alt": [
+    "City News Albania"
+   ],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://www.cna.al/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://live1.mediadesk.al/cnatvlive.m3u8",
+     "quality": "1080p",
+     "probe": "blocked-403",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    },
+    {
+     "url": "https://live1.mediadesk.al/cnatv.php",
+     "quality": null,
+     "probe": "blocked-403",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    },
+    {
+     "url": "https://op-group1-swiftservehd-1.dens.tv/h/h29/index.m3u8",
+     "quality": null,
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": true,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "Cufo.al",
+   "name": "Cufo",
+   "alt": [
+    "Çufo"
+   ],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "kids"
+   ],
+   "website": "https://www.digitalb.al/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://digitalb-live.morescreens.com/DAL_1_005/playlist.m3u8?application_id=backoffice1&application_installation_id=1&authority_instance_id=spectar-prd-digitalb&detected_delivery_method=hls&id=DAL_1_005&playlist_template=nginx&profile_id=1&ps=94d0066599d8f74d1c090e93ac4617b6491d3629d2e2d770870fcef1f7effa25b204aa53b3821da5e9e65bee8e94331bcae2cb344d0739ca3a938b4ef2051cc8&subscriber_id=1&token=142cda7d50870275a9ca7988ff001b32ab30709b&uuid=backoffice1&vh=7ab82e63aae8510c6b37ea16da502e54e441a5a1a88bce0c8ed63da99bce948d86253d64ae00424dda8b9c8b6e2cd0f6cd79d8b0a56e10759210cdf4f6761d11&video_id=12498",
+     "quality": null,
+     "probe": "blocked-403",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "FieriTv.al",
+   "name": "Fieri Tv",
+   "alt": [
+    "Fieri Televizion"
+   ],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "general"
+   ],
+   "website": "http://www.fieritv.com",
+   "network": null,
+   "streams": [
+    {
+     "url": "http://valashop.online:8090/fieritv.m3u8",
+     "quality": "720p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "News24.al",
+   "name": "News 24",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://balkanweb.com/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://tv.balkanweb.com/news24/livestream/playlist.m3u8",
+     "quality": "392p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    },
+    {
+     "url": "http://tv.balkanweb.com:8081/news24/livestream/playlist.m3u8",
+     "quality": "392p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "ntv.al",
+   "name": "ntv",
+   "alt": [
+    "Neser TV"
+   ],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://ntv.al/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://protokolldns.xyz/ntv.l.i.v.e5547892023/index.m3u8",
+     "quality": "720p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "OraNews.al",
+   "name": "Ora News",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://www.oranews.tv/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://live1.mediadesk.al/oranews.m3u8",
+     "quality": "720p",
+     "probe": "blocked-403",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "PanoramaTV.al",
+   "name": "Panorama TV",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://www.panorama.com.al/panoramatv/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://159.69.221.56/panorama/livestream/playlist.m3u8",
+     "quality": null,
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "ReportTV.al",
+   "name": "Report TV",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://shqiptarja.com/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://deb10stream.duckdns.org/hls/stream.m3u8",
+     "quality": "720p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "RTSH1.al",
+   "name": "RTSH 1",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "general"
+   ],
+   "website": "https://tv.rtsh.al/kanalet/rtsh-1",
+   "network": null,
+   "streams": [
+    {
+     "url": "http://178.33.11.6:8696/live/rtsh1ott/playlist.m3u8",
+     "quality": "1080p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "RTSH2.al",
+   "name": "RTSH 2",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "general"
+   ],
+   "website": "https://tv.rtsh.al/",
+   "network": null,
+   "streams": [
+    {
+     "url": "http://178.33.11.6:8696/live/rtsh2/playlist.m3u8",
+     "quality": "1080p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "RTSH24.al",
+   "name": "RTSH 24",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://tv.rtsh.al/kanalet/rtsh-24",
+   "network": null,
+   "streams": [
+    {
+     "url": "http://178.33.11.6:8696/live/rtsh24/playlist.m3u8",
+     "quality": "1080p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "RTSHShqip.al",
+   "name": "RTSH Shqip",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "movies"
+   ],
+   "website": "https://tv.rtsh.al/kanalet/rtsh-shqip",
+   "network": null,
+   "streams": [
+    {
+     "url": "http://178.33.11.6:8696/live/rtshshqip/playlist.m3u8",
+     "quality": "1080p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "RTSHSport.al",
+   "name": "RTSH Sport",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "sports"
+   ],
+   "website": "https://tv.rtsh.al/kanalet/rtsh-sport",
+   "network": null,
+   "streams": [
+    {
+     "url": "http://178.33.11.6:8696/live/rtshsport/playlist.m3u8",
+     "quality": "1080p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "Syri.al",
+   "name": "Syri",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://www.syri.net/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://stream.syritv.al/live/syritv/playlist.m3u8",
+     "quality": "720p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "TropojaTelevizion.al",
+   "name": "Tropoja Televizion",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "general"
+   ],
+   "website": "https://tropoja.tv/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://live.prostream.al/al/smil:tropojatv.smil/playlist.m3u8",
+     "quality": null,
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "TV7Albania.al",
+   "name": "TV 7 Albania",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "religious"
+   ],
+   "website": "https://tv7.al/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://vs.sednastream.com:1936/tv7/tv7/playlist.m3u8",
+     "quality": null,
+     "probe": "blocked-403",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "TVJohaniter.al",
+   "name": "TV Johaniter",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "general"
+   ],
+   "website": "https://www.tvjohaniter.com/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://protokolldns.xyz/johaniterweb44547dsd/index.m3u8",
+     "quality": "720p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "C",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "VizionPlus.al",
+   "name": "Vizion Plus",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "general"
+   ],
+   "website": "https://www.vizionplus.tv/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://tringliveviz.akamaized.net/delta/105/out/u/qwaszxerdfcvrtryuy.m3u8",
+     "quality": "1080p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "ZjarrTV.al",
+   "name": "Zjarr TV",
+   "alt": [],
+   "country": "AL",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "general"
+   ],
+   "website": "https://zjarr.tv/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://zjarr.future.al/hls/playlist.m3u8",
+     "quality": "360p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "Kohavision.xk",
+   "name": "Kohavision",
+   "alt": [
+    "KTV"
+   ],
+   "country": "XK",
+   "languages": [
+    "sqi",
+    "srp"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://www.koha.net/ktv/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://gjirafa-video-live.gjirafa.net/gjvideo-livestream/lj9-pxm-o53-rp0/tracks-v4a1/mono.m3u8",
+     "quality": null,
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "RTK3.xk",
+   "name": "RTK 3",
+   "alt": [],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [],
+   "website": "https://www.rtklive.com/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://gjirafa-video-live.gjirafa.net/gjvideo-livestream/rtk3/index.m3u8",
+     "quality": "1080p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "RTV21.xk",
+   "name": "RTV21",
+   "alt": [],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [],
+   "website": "https://rtv21.tv/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://gjirafa-video-live.gjirafa.net/gjvideo-live/2cz-npl-jfn-9he/tracks-v2a1/mono.m3u8",
+     "quality": null,
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "T7.xk",
+   "name": "T7",
+   "alt": [],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [],
+   "website": "https://www.televizioni7.com/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://gjirafa-video-live.gjirafa.net/gjvideo-livestream-specific/1z8-byc-4ee-lc9/index.m3u8",
+     "quality": "720p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "TVArberia3Femije.xk",
+   "name": "TV Arberia 3 Femije",
+   "alt": [
+    "TV Arbëria 3 Fëmijë"
+   ],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "kids"
+   ],
+   "website": "https://www.rtvarberia.com/live-femije/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://ssh101.bozztv.com/ssh101/rtvarberia3/playlist.m3u8",
+     "quality": "720p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "TVArberia4Muzike.xk",
+   "name": "TV Arberia 4 Muzike",
+   "alt": [
+    "TV Arbëria 4 Muzikë"
+   ],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "music"
+   ],
+   "website": "https://www.rtvarberia.com/tv-arberia-4-muzike/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://ssh101.bozztv.com/ssh101/rtvarberia4/playlist.m3u8",
+     "quality": "720p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "TVArberiaRetroHits.xk",
+   "name": "TV Arberia Retro Hits",
+   "alt": [
+    "TV Arbëria Retro Hits"
+   ],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "music"
+   ],
+   "website": "http://www.rtvarberia.com/tv-arberia-retro-hits/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://ssh101.bozztv.com/ssh101/rtvarberiaretro/playlist.m3u8",
+     "quality": "720p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "id": "TVArta.xk",
+   "name": "TV Arta",
+   "alt": [],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [
+    "news"
+   ],
+   "website": "https://www.koha.net/arta-tv/14427/tv-arta-live/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://gjirafa-video-live.gjirafa.net/gjvideo-live/mps-vgx-u9p-qv1/index.m3u8",
+     "quality": "720p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "TVDielli.xk",
+   "name": "TV Dielli",
+   "alt": [],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [],
+   "website": "http://stream.tvdielli.com/",
+   "network": null,
+   "streams": [
+    {
+     "url": "http://stream.tvdielli.com:8081/dielli/index.m3u8",
+     "quality": "720p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "TVOpoja.xk",
+   "name": "TV Opoja",
+   "alt": [],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [],
+   "website": "",
+   "network": null,
+   "streams": [
+    {
+     "url": "http://ip.opoja.tv:1935/tvopoja/tvopoja/playlist.m3u8",
+     "quality": "720p",
+     "probe": "plays",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "id": "TVSyri.xk",
+   "name": "TV Syri",
+   "alt": [],
+   "country": "XK",
+   "languages": [
+    "sqi"
+   ],
+   "categories": [],
+   "website": "https://www.syri-vision.tv/",
+   "network": null,
+   "streams": [
+    {
+     "url": "https://gjirafa-video-live.gjirafa.net/gjvideo-live/xej-xnb-ba0-kup/index.m3u8",
+     "quality": "720p",
+     "probe": "fails",
+     "checked": "2026-10-24",
+     "tier": "B",
+     "needs_referrer": false,
+     "enabled": false
+    }
+   ]
+  }
+ ]
+}

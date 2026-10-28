@@ -34,7 +34,7 @@ final class SettingsPage extends Page {
         LinearLayout left = new LinearLayout(host.context());
         left.setOrientation(LinearLayout.VERTICAL);
         TextView t = Theme.text(new TextView(host.context()), 60, Theme.TEXT, 800);
-        t.setText("Settings");
+        t.setText(Tr.t("Settings"));
         t.setLetterSpacing(-0.02f);
         LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -42,7 +42,7 @@ final class SettingsPage extends Page {
         left.addView(t, tl);
         TextView s = Theme.text(new TextView(host.context()), 14, Theme.TEXT2, 450);
         s.setSingleLine(false);
-        s.setText("Shortcuts into the TV's system settings, and OMNI's own options.");
+        s.setText(Tr.t("Shortcuts into the TV's system settings, and OMNI's own options."));
         LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(dp(260), ViewGroup.LayoutParams.WRAP_CONTENT);
         sl.topMargin = dp(12);
         left.addView(s, sl);
@@ -56,8 +56,11 @@ final class SettingsPage extends Page {
         list.setClipChildren(false);
         list.addView(item("Control Center", "Status and shortcuts", false, host::openControlCenter));
         list.addView(item("Welcome & setup", "Run the setup again", false, host::openWelcome));
+        list.addView(item("Language", Tr.NAMES[Tr.lang], false, host::chooseLanguage));
+        list.addView(item("Simple mode", UserMode.simple(host.context()) ? "On" : "Off", false, host::toggleSimple));
+        list.addView(item("Quick access", "Choose what is on your Home row", false, host::openQuickAccess));
         list.addView(item("Remote buttons", "INFO, colour keys, mic", false, host::openRemoteButtons));
-        list.addView(item("Server", "Home server status", false, () -> openOwn("com.rasha.omni.server.ServerActivity")));
+        if (!UserMode.simple(host.context())) list.addView(item("Server", "Home server status", false, () -> openOwn("com.rasha.omni.server.ServerActivity")));
         list.addView(item("Gallery", "Photos, videos, ambient display settings", false, () -> openOwn("com.rasha.omni.gallery.GalleryActivity")));
         list.addView(item("Ambient display", "Start the photograph and clock now", false, () -> openOwn("com.rasha.omni.gallery.SlideshowActivity")));
         list.addView(item("Updates", updatesLine(), false, this::updatesMenu));
@@ -84,7 +87,7 @@ final class SettingsPage extends Page {
     }
 
     private SettingRow item(String name, String desc, boolean destructive, final Runnable act) {
-        final SettingRow r = new SettingRow(host.context(), name, desc);
+        final SettingRow r = new SettingRow(host.context(), Tr.t(name), Tr.t(desc));
         r.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
         r.setOnFocusChangeListener((v, has) -> {
             if (!has) return;
@@ -150,8 +153,8 @@ final class SettingsPage extends Page {
     private String updatesLine() {
         Updater u = Updater.get(host.context());
         UpdateRules.Release r = u.available();
-        if (r != null) return u.downloaded() != null && !u.personalBuild() ? "OMNI " + r.tag.replaceFirst("^v", "") + " is ready to install" : "OMNI " + r.tag.replaceFirst("^v", "") + " is available";
-        return "Installed " + u.installed() + (u.lastCheck() > 0 ? ", up to date" : "");
+        if (r != null) return "OMNI " + r.tag.replaceFirst("^v", "") + " " + Tr.t(u.downloaded() != null && !u.personalBuild() ? "is ready to install" : "is available");
+        return Tr.t("Installed") + " " + u.installed() + (u.lastCheck() > 0 ? ", " + Tr.t("up to date") : "");
     }
 
     private static String ago(long then) {

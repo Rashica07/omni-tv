@@ -75,7 +75,7 @@ final class NavBar extends View {
         ink.setStyle(Paint.Style.STROKE);
         ink.setStrokeCap(Paint.Cap.ROUND);
         ink.setStrokeJoin(Paint.Join.ROUND);
-        for (int i = 0; i < 5; i++) labelW[i] = label.measureText(NAMES[i]);
+        for (int i = 0; i < 5; i++) labelW[i] = label.measureText(Tr.t(NAMES[i]));
     }
 
     void setAmbient(Ambient a) { ambient = a; }
@@ -158,7 +158,7 @@ final class NavBar extends View {
             drawIcon(c, i, x + dp(COMPACT_W) / 2f, cy, fg);
             if (o > 0.05f) {
                 label.setColor(Theme.alpha(fg, (int) (255 * Math.min(1f, Math.max(0f, (o - 0.3f) / 0.7f)))));
-                c.drawText(NAMES[i], x + dp(COMPACT_W) - dp(2), cy + dp(5), label);
+                c.drawText(Tr.t(NAMES[i]), x + dp(COMPACT_W) - dp(2), cy + dp(5), label);
             }
             x += iw + dp(GAP);
         }
@@ -233,7 +233,7 @@ final class NavBar extends View {
 
     @Override public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
-        info.setText(NAMES[selected]);
+        info.setText(Tr.t(NAMES[selected]));
         info.setContentDescription("Navigation, " + NAMES[selected] + ", " + (selected + 1) + " of 5");
     }
 }

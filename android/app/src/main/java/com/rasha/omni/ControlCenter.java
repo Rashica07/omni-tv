@@ -169,7 +169,7 @@ final class ControlCenter extends FrameLayout {
             Item v = add(K_VOLUME, "Volume", "");
             add(K_NOTE, "INPUTS", "");                                    // header, replaced by the inputs when they arrive
             add(K_INPUT, "", "").focusable = false;                       // placeholder: "checking" until the list arrives
-            add(K_SERVER, "OMNIPTV server", server);
+            if (server != null) add(K_SERVER, "OMNIPTV server", server);                 // Simple mode has no server row
             add(K_WEATHER, "Weather", weather);
             add(K_NETWORK, "Network", network);
             add(K_ICONS, "", "");

@@ -75,7 +75,7 @@ You can verify this yourself: `grep -rhoE "https?://[a-z0-9.-]+" android/app/src
 The launcher's Watch tab and Cinema's own matching use TMDB. **The release APKs include the author's TMDB v3 key**, so posters work without setup. Anyone can extract a key from an APK, so it is shared, rate-limited and may be rotated; if posters stop appearing, build your own APK with your own free key (`tmdb.token`, see `INSTALL.md`). Cinema does not need a key at all when it reads a library from your own `omniptvd`, which does the matching.
 
 ## What is deliberately not included
-Channel logos and any channel or stream list. This project does not host, relay, advertise or unblock streams; you add only sources you are allowed to watch. See [`THIRD-PARTY.md`](THIRD-PARTY.md).
+Channel logos. The app does include a small **catalogue of 33 Albanian and Kosovan channels** (name, country, the broadcaster's own public website and its own public stream address, as the broadcasters publish them, with the result of a playback check; 14 of the streams were playing when checked and are on by default, the rest are listed as unavailable). This project does not host, relay, advertise or unblock streams, does not bypass geo-blocking or DRM, and you add only further sources you are allowed to watch. See [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
 ## Repository map
 | Folder | What | Build |

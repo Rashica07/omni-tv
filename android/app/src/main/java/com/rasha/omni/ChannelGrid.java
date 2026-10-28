@@ -116,7 +116,7 @@ final class ChannelGrid extends View {
             if (s.channels.isEmpty() && s.inputs.isEmpty()) continue;
             int count = s.channels.size() + s.inputs.size();
             heads.add(new float[]{y});
-            headText.add(s.title + "   ·   " + count + (s.inputs.isEmpty() ? (count == 1 ? " channel" : " channels") : (count == 1 ? " input" : " inputs")));
+            headText.add(s.title + "   ·   " + count + " " + (s.inputs.isEmpty() ? Tr.t(count == 1 ? "channel" : "channels") : Tr.t(count == 1 ? "input" : "inputs")));
             y += HEAD;
             int i = 0;
             for (Inputs.Entry in : s.inputs) {

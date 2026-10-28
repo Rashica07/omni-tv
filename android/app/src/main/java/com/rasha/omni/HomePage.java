@@ -66,7 +66,7 @@ final class HomePage extends Page implements ShelfStack.Listener {
         col.addView(empty);
     }
 
-    @Override String hint() { return host.repo().ordered().isEmpty() ? "" : "Hold OK for options"; }
+    @Override String hint() { return host.repo().ordered().isEmpty() ? "" : Tr.t("Hold OK for options"); }
 
     @Override void refresh(String fp, String fl) {
         if (stack.isMoving() && fp == null) return;     // late data must not undo a move in progress
@@ -80,7 +80,7 @@ final class HomePage extends Page implements ShelfStack.Listener {
         stage.setVisibility(View.VISIBLE);
         empty.setVisibility(View.GONE);
         List<ShelfStack.Shelf> shelves = new ArrayList<>();
-        add(shelves, "fav", "Favorites", repo.favorites(), true);
+        add(shelves, "fav", UserMode.simple(host.context()) ? "Quick access" : "Favorites", repo.favorites(), true);
         if (!watchNext.isEmpty()) {
             List<ShelfStack.Item> items = new ArrayList<>();
             for (WatchNext.Entry e : watchNext) {
@@ -89,10 +89,10 @@ final class HomePage extends Page implements ShelfStack.Listener {
                 items.add(it);
             }
             for (ShelfStack.Item wi : items) wi.shape = ShelfStack.SHAPE_POSTER;
-            shelves.add(new ShelfStack.Shelf("wn", "Continue watching", ShelfStack.KIND_POSTER, items));
+            shelves.add(new ShelfStack.Shelf("wn", Tr.t("Continue watching"), ShelfStack.KIND_POSTER, items));
         }
-        add(shelves, "rec", "Recent", repo.continueRow(), false);
-        add(shelves, "top", "Most used", repo.mostUsed(), false);
+        add(shelves, "rec", Tr.t("Recent"), repo.continueRow(), false);
+        add(shelves, "top", Tr.t("Most used"), repo.mostUsed(), false);
         stack.setShelves(shelves, fp, fl);
         stack.setMoving(repo.movingPkg, repo.movingList);
         if (fp != null) focusSoon(stack);
@@ -120,7 +120,7 @@ final class HomePage extends Page implements ShelfStack.Listener {
 
     private static void add(List<ShelfStack.Shelf> out, String id, String name, List<AppRepo.App> apps, boolean reorder) {
         if (apps.isEmpty()) return;
-        ShelfStack.Shelf s = new ShelfStack.Shelf(id, name, ShelfStack.KIND_APP, AppItems.list(apps));
+        ShelfStack.Shelf s = new ShelfStack.Shelf(id, Tr.t(name), ShelfStack.KIND_APP, AppItems.list(apps));
         s.reorderable = reorder;
         out.add(s);
     }
@@ -159,7 +159,7 @@ final class HomePage extends Page implements ShelfStack.Listener {
             meta.setText("From " + appName(((WatchNext.Entry) it.data).pkg));
         } else {
             int n = host.repo().count(((AppRepo.App) it.data).pkg);
-            meta.setText(n == 0 ? "Not opened yet" : "Opened " + n + (n == 1 ? " time" : " times"));
+            meta.setText(n == 0 ? Tr.t("Not opened yet") : Tr.t("Opened") + " " + n + " " + Tr.t(n == 1 ? "time" : "times"));
         }
         int len = label.length();
         title.setTextSize(len <= 10 ? 44 : len <= 18 ? 38 : 32);

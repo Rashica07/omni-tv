@@ -202,7 +202,7 @@ public class MainActivity extends Activity implements Host {
         if (sheet != null || cc != null || search != null) return;
         final View before = getCurrentFocus();
         setFocusBlocked(true);
-        cc = new ControlCenter(this, ambient, net.describe(), serverLine(), weatherLine(), CinemaBridge.installed(this), new ControlCenter.Actions() {
+        cc = new ControlCenter(this, ambient, net.describe(), UserMode.simple(this) ? null : serverLine(), weatherLine(), CinemaBridge.installed(this), new ControlCenter.Actions() {
             @Override public void checkServer() { MainActivity.this.checkServer(false); }                       // the answer lands in the row itself (see checkServer)
             @Override public void refreshWeather() {
                 Weather.refresh(MainActivity.this, true, (r, failed) -> ui.post(() -> { pushStatus(); if (cc != null) cc.setWeather(failed && !r.valid() ? "Could not update" : weatherLine() + (failed ? " (offline)" : "")); }));
@@ -428,8 +428,16 @@ public class MainActivity extends Activity implements Host {
             case "tv": nav.select(3, true); selectTab(3); break;
             case "settings": nav.select(4, true); selectTab(4); break;
             case "weather": openWeather(); break;
+            case "antenna": nav.select(3, true); selectTab(3); ui.postDelayed(() -> { if (pages[3] instanceof TvPage) ((TvPage) pages[3]).showAntenna(); }, 300); break;
             case "cinema": if (!CinemaBridge.open(this, "omni-cinema://home")) flash("Can't open OMNI Cinema", "It is not installed"); break;
             default:
+                if (act.startsWith("input:")) { openInputById(act.substring(6)); break; }
+                if (act.startsWith("channel:")) {
+                    final String id = act.substring(8);
+                    nav.select(3, true); selectTab(3);
+                    ui.postDelayed(() -> { if (!(pages[3] instanceof TvPage) || !((TvPage) pages[3]).playById(id)) flash("That channel is not available", ""); }, 500);
+                    break;
+                }
                 if (act.startsWith("app:")) {
                     AppRepo.App a = repo.get(act.substring(4));
                     if (a == null) { flash("That app is not installed", ""); break; }
@@ -447,7 +455,7 @@ public class MainActivity extends Activity implements Host {
         List<Runnable> acts = new ArrayList<>();
         java.util.LinkedHashMap<String, List<Integer>> groups = new java.util.LinkedHashMap<>();       // one physical button can arrive under two codes: one row for it
         for (java.util.Map.Entry<Integer, String> en : keyMap().all().entrySet()) {
-            String l = keyLabel(en.getKey()) + "  \u2192  " + KeyMap.actionName(en.getValue());
+            String l = keyLabel(en.getKey()) + "  \u2192  " + actionTitle(en.getValue());
             if (!groups.containsKey(l)) groups.put(l, new ArrayList<>());
             groups.get(l).add(en.getKey());
         }
@@ -456,17 +464,129 @@ public class MainActivity extends Activity implements Host {
             labels.add(g.getKey());
             acts.add(() -> closeSheet(() -> chooseAction(keys)));
         }
-        labels.add("Use the buttons everywhere: " + (KeyService.enabled(this) ? "On" : "Off"));
+        labels.add(Tr.t("Use the buttons everywhere") + ": " + Tr.t(KeyService.enabled(this) ? "On" : "Off"));
         acts.add(() -> closeSheet(() -> {
             try { startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); flash("Turn on \u201cOMNI remote buttons\u201d", "It only sees the buttons you assigned"); }
             catch (Exception e) { flash("This TV hides that setting", "adb: settings put secure enabled_accessibility_services " + new android.content.ComponentName(this, KeyService.class).flattenToString()); }
         }));
-        labels.add("Add a button");
-        acts.add(() -> closeSheet(() -> { capturingKey = true; banner.show(Banner.MODE_MOVE, "Press a button on your remote", "Any button except arrows, OK, Back, Home, volume and power"); }));
-        labels.add("Back to the defaults");
+        labels.add(Tr.t("Add a button"));
+        acts.add(() -> closeSheet(() -> { capturingKey = true; banner.show(Banner.MODE_MOVE, Tr.t("Press a button on your remote"), Tr.t("Any button except arrows, OK, Back, Home, volume and power")); }));
+        labels.add(Tr.t("Back to the defaults"));
         acts.add(() -> closeSheet(() -> { keyMap = new KeyMap(null); saveKeyMap(); flash("Remote buttons reset", "INFO opens the Control Center, the mic the assistant"); }));
-        showSheet("Remote buttons", "What each button does while you are in OMNI.", labels, acts);
+        showSheet(Tr.t("Remote buttons"), Tr.t("What each button does while you are in OMNI."), labels, acts);
     }
+
+    /** What a button's action is called on screen: apps, inputs and channels by their own names. */
+    private String actionTitle(String act) {
+        if (act != null && act.startsWith("app:")) { AppRepo.App a = repo.get(act.substring(4)); return Tr.t("Open") + " " + (a == null ? act.substring(4) : a.label); }
+        if (act != null && act.startsWith("channel:")) { String n = channelName(act.substring(8)); return n == null ? Tr.t("Watch a channel") : Tr.t("Watch") + " " + n; }
+        if (act != null && act.startsWith("input:")) { String n = inputNames.get(act.substring(6)); return n == null ? Tr.t("Open an input") : Tr.t("Open") + " " + n; }
+        return Tr.t(KeyMap.actionName(act));
+    }
+
+    private final java.util.Map<String, String> inputNames = new java.util.HashMap<>();
+    private final java.util.Map<String, String> channelNames = new java.util.HashMap<>();
+
+    private String channelName(String id) { return channelNames.get(id); }
+
+    /** A paged list of things a remote button (or the quick access row) can point at: apps, HDMI inputs, channels. Seven to a page so the sheet stays short. */
+    private void chooseTarget(final List<Integer> keys, final String kind) {
+        new Thread(() -> {
+            final List<String> ids = new ArrayList<>(), names = new ArrayList<>();
+            if (kind.equals("app")) { for (AppRepo.App a : repo.alphabetical()) { ids.add("app:" + a.pkg); names.add(a.label); } }
+            else if (kind.equals("input")) { for (Inputs.Entry e : Inputs.query(this)) if (e.hdmi) { ids.add("input:" + e.id); names.add(e.displayName()); inputNames.put(e.id, e.displayName()); } }
+            else {
+                java.util.Set<String> fav = PtvCatalog.favorites(this);
+                List<PtvModel.Channel> all = new ArrayList<>(PtvCatalog.load(this));
+                all.addAll(TunerSource.load(this));
+                java.util.Collections.sort(all, (x, y) -> (fav.contains(y.id) ? 1 : 0) - (fav.contains(x.id) ? 1 : 0));        // favourites first
+                for (PtvModel.Channel c : all) if (c.playable()) { ids.add("channel:" + c.id); names.add((fav.contains(c.id) ? "\u2605 " : "") + c.name); channelNames.put(c.id, c.name); }
+            }
+            ui.post(() -> {
+                if (ids.isEmpty()) { flash(kind.equals("input") ? "No HDMI input found" : "Nothing to choose from", ""); return; }
+                pagedPicker(kind.equals("app") ? Tr.t("Open an app…") : kind.equals("input") ? Tr.t("Open an input…") : Tr.t("Watch a channel…"), Tr.t("Then choose what it should open."), names, 0, i -> {
+                    final String act = ids.get(i);
+                    for (int k : keys) keyMap().set(k, act);
+                    saveKeyMap();
+                    flash(keyLabel(keys.get(0)) + " now: " + names.get(i).replace("\u2605 ", ""), "Change it in Settings > Remote buttons");
+                });
+            });
+        }, "key-targets").start();
+    }
+
+    private interface Pick { void at(int index); }
+
+    private void pagedPicker(final String title, final String sub, final List<String> names, final int page, final Pick pick) {
+        final int per = 7, pages = Math.max(1, (names.size() + per - 1) / per), pg = Math.min(page, pages - 1);
+        List<String> labels = new ArrayList<>();
+        List<Runnable> acts = new ArrayList<>();
+        for (int i = pg * per; i < Math.min(names.size(), pg * per + per); i++) { final int idx = i; labels.add(names.get(i)); acts.add(() -> closeSheet(() -> pick.at(idx))); }
+        if (pages > 1) { labels.add(Tr.t("More") + "  (" + (pg + 1) + "/" + pages + ")"); acts.add(() -> closeSheet(() -> pagedPicker(title, sub, names, (pg + 1) % pages, pick))); }
+        labels.add(Tr.t("Done"));
+        acts.add(() -> closeSheet(null));
+        showSheet(title, sub, labels, acts);
+    }
+
+    /** Opens an HDMI input in OMNI's full-screen viewer, from a remote button. */
+    private void openInputById(final String id) {
+        new Thread(() -> {
+            Inputs.Entry hit = null;
+            for (Inputs.Entry e : Inputs.query(this)) if (e.id.equals(id)) hit = e;
+            final Inputs.Entry f = hit;
+            ui.post(() -> { if (f == null) flash("That input is not available", ""); else HdmiViewerActivity.open(this, f); });
+        }, "key-input").start();
+    }
+
+    // ------------------------------------------------------------ language, simple mode, quick access, antenna
+
+    @Override public void chooseLanguage() {
+        List<String> labels = new ArrayList<>();
+        List<Runnable> acts = new ArrayList<>();
+        for (int i = 0; i < Tr.NAMES.length; i++) {
+            final int idx = i;
+            labels.add(Tr.NAMES[i] + (i == Tr.lang ? "  \u2713" : ""));
+            acts.add(() -> closeSheet(() -> { UserMode.setLanguage(this, idx); ui.post(this::recreate); }));
+        }
+        showSheet(Tr.t("Language"), "", labels, acts);
+    }
+
+    @Override public void toggleSimple() {
+        boolean on = !UserMode.simple(this);
+        UserMode.setSimple(this, on);
+        flash(Tr.t("Simple mode"), on ? "No server, only what you use" : "Everything is back");
+        if (on) { serverChecked = false; serverStatus = new PtvServer.Status(); pushStatus(); }
+        refreshAll(null, null);
+    }
+
+    @Override public void openQuickAccess() { quickAccessPage(0); }
+
+    private void quickAccessPage(final int page) {
+        final List<AppRepo.App> apps = repo.alphabetical();
+        final java.util.Set<String> fav = new java.util.HashSet<>();
+        for (AppRepo.App a : repo.favorites()) fav.add(a.pkg);
+        final int per = 7, pages = Math.max(1, (apps.size() + per - 1) / per), pg = Math.min(page, pages - 1);
+        List<String> labels = new ArrayList<>();
+        List<Runnable> acts = new ArrayList<>();
+        for (int i = pg * per; i < Math.min(apps.size(), pg * per + per); i++) {
+            final AppRepo.App a = apps.get(i);
+            labels.add((fav.contains(a.pkg) ? "\u2713  " : "     ") + a.label);
+            acts.add(() -> closeSheet(() -> { repo.togglePin(a.pkg); refreshAll(null, null); quickAccessPage(pg); }));
+        }
+        if (pages > 1) { labels.add(Tr.t("More") + "  (" + (pg + 1) + "/" + pages + ")"); acts.add(() -> closeSheet(() -> quickAccessPage((pg + 1) % pages))); }
+        labels.add(Tr.t("Done"));
+        acts.add(() -> closeSheet(null));
+        showSheet(Tr.t("Choose your quick access"), Tr.t("OK adds or removes an app on your Home row."), labels, acts);
+    }
+
+    /** Opens the TV maker's own antenna scan; when the person comes back the channel list is read again (OMNI never scans itself). */
+    private void scanAntennaNow() {
+        Intent s = TunerSource.scanIntent(this);
+        if (s == null) { flash("This TV has no scan screen OMNI can open", "Use the TV's own Settings > Channels"); return; }
+        try { startActivity(s); reloadTvOnResume = true; }
+        catch (Exception e) { flash("This TV has no scan screen OMNI can open", "Use the TV's own Settings > Channels"); }
+    }
+
+    private boolean reloadTvOnResume;
 
     private void captured(KeyEvent e) {
         int key = KeyMap.keyOf(e.getKeyCode(), e.getScanCode());
@@ -482,14 +602,20 @@ public class MainActivity extends Activity implements Host {
         final int key = keys.get(0);
         List<String> labels = new ArrayList<>();
         List<Runnable> acts = new ArrayList<>();
+        labels.add(Tr.t("Open an app…"));
+        acts.add(() -> closeSheet(() -> chooseTarget(keys, "app")));
+        labels.add(Tr.t("Open an input…"));
+        acts.add(() -> closeSheet(() -> chooseTarget(keys, "input")));
+        labels.add(Tr.t("Watch a channel…"));
+        acts.add(() -> closeSheet(() -> chooseTarget(keys, "channel")));
         for (int i = 0; i < KeyMap.ACTIONS.length; i++) {
             final String a = KeyMap.ACTIONS[i];
-            labels.add(KeyMap.ACTION_NAMES[i] + (a.equals(keyMap().get(key)) ? "  \u2713" : ""));
+            labels.add(Tr.t(KeyMap.ACTION_NAMES[i]) + (a.equals(keyMap().get(key)) ? "  \u2713" : ""));
             acts.add(() -> closeSheet(() -> { for (int k : keys) keyMap().set(k, a); saveKeyMap(); flash(keyLabel(key) + " now opens " + KeyMap.actionName(a), "Change it in Settings > Remote buttons"); }));
         }
-        labels.add("Nothing (its usual job)");
+        labels.add(Tr.t("Nothing (its usual job)"));
         acts.add(() -> closeSheet(() -> { for (int k : keys) keyMap().set(k, "none"); saveKeyMap(); flash(keyLabel(key) + " is back to normal", ""); }));
-        showSheet(keyLabel(key), "Choose what this button does in OMNI.", labels, acts);
+        showSheet(keyLabel(key), Tr.t("Choose what this button does in OMNI."), labels, acts);
     }
 
     // ------------------------------------------------------------ assistant
@@ -615,11 +741,24 @@ public class MainActivity extends Activity implements Host {
                 try { startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)); }
                 catch (Exception e) { flash("This TV hides that setting", "It can be allowed with adb: cmd notification allow_listener " + DeviceWatch.listener(MainActivity.this).flattenToString()); }
             }
+            @Override public boolean simple() { return UserMode.simple(MainActivity.this); }
+            @Override public void setSimple(boolean s) { UserMode.setSimple(MainActivity.this, s); }
+            @Override public boolean tuner() { return TunerSource.hasTuner(MainActivity.this); }
+            @Override public String antenna() { return TunerSource.summary(MainActivity.this); }
+            @Override public void scanAntenna() { scanAntennaNow(); }
+            @Override public void languageChanged(int nextStep) {
+                UserMode.setLanguage(MainActivity.this, Tr.lang);
+                sp.edit().putInt("setup_step", nextStep).apply();
+                ui.post(MainActivity.this::recreate);                    // every screen is rebuilt in the new language; the setup comes back at the next step
+            }
+            @Override public void pickApps() { sp.edit().putBoolean("setup_done", true).putInt("setup_step", 0).apply(); welcome.dismiss(true); ui.postDelayed(MainActivity.this::openQuickAccess, 600); }
+            @Override public void pickButtons() { sp.edit().putBoolean("setup_done", true).putInt("setup_step", 0).apply(); welcome.dismiss(true); ui.postDelayed(MainActivity.this::openRemoteButtons, 600); }
             @Override public void finished(boolean completed, int step) {
                 sp.edit().putBoolean("setup_done", true).putInt("setup_step", completed ? 0 : step).apply();
                 OmniLog.state("welcome closed completed=" + completed + " step=" + step);
                 welcome = null;
                 setPagesVisible(true);
+                refreshAll(null, null);
                 ui.post(() -> { if (cur >= 0 && pages[cur] != null) pages[cur].focusFirst(); });
             }
         });
@@ -934,6 +1073,7 @@ public class MainActivity extends Activity implements Host {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         Theme.init(this);
+        UserMode.applyLanguage(this);
         safeMode = CrashGuard.safeMode(this);
         getWindow().setBackgroundDrawable(new ColorDrawable(Theme.BG));
         repo = new AppRepo(this);
@@ -952,7 +1092,7 @@ public class MainActivity extends Activity implements Host {
         if (!safeMode) { devices = new DeviceWatch(this, e -> ui.post(() -> deviceEvent(e))); devices.start(); }
         pushStatus();
         refreshWeather(false);
-        if (PtvServer.base(this) != null) checkServer(false);
+        if (PtvServer.base(this) != null && !UserMode.simple(this)) checkServer(false);
         pages[0] = new HomePage(this);
         pages[1] = new WatchPage(this);
         pages[2] = new AppsPage(this);
@@ -1013,6 +1153,7 @@ public class MainActivity extends Activity implements Host {
         if (welcome != null) welcome.refresh();                       // back from a system screen the setup opened
         if (devices != null) devices.watchSessions();                 // notification access may have just been allowed
         armIdle();
+        if (reloadTvOnResume) { reloadTvOnResume = false; if (pages[3] != null) pages[3].refresh(null, null); }
         startMedia();                                                  // Now Playing follows the active media session (a no-op until access is allowed)
         if (wallpaper != null) wallpaper.apply();                      // a new schedule slot while we were away
         if (ambient != null) ambient.boost(false);                     // the bloom relaxes when OMNI is back

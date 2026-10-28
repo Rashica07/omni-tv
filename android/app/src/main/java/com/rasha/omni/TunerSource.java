@@ -19,6 +19,44 @@ import java.util.Set;
 final class TunerSource {
     private TunerSource() { }
 
+    /** True when the TV has an antenna tuner input at all (scanned or not). */
+    static boolean hasTuner(Context c) {
+        try {
+            TvInputManager m = (TvInputManager) c.getSystemService(Context.TV_INPUT_SERVICE);
+            for (TvInputInfo i : m.getTvInputList()) if (i.getType() == TvInputInfo.TYPE_TUNER && !i.isPassthroughInput()) return true;
+        } catch (RuntimeException ignored) { }
+        return false;
+    }
+
+    /** The TV maker's own channel-scan screen for the first tuner, or null. OMNI never scans itself: the TV's tuner app does, and OMNI reads the result. */
+    static android.content.Intent scanIntent(Context c) {
+        try {
+            TvInputManager m = (TvInputManager) c.getSystemService(Context.TV_INPUT_SERVICE);
+            for (TvInputInfo i : m.getTvInputList()) if (i.getType() == TvInputInfo.TYPE_TUNER && !i.isPassthroughInput()) {
+                android.content.Intent s = i.createSetupIntent();
+                if (s != null) return s.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+            }
+        } catch (RuntimeException ignored) { }
+        return null;
+    }
+
+    /** One line for the setup and the TV page: how many antenna channels there are and from which countries, or that there are none. */
+    static String summary(Context c) {
+        List<PtvModel.Channel> l = load(c);
+        if (l.isEmpty()) return hasTuner(c) ? "No antenna channels yet" : "";
+        int it = 0, ch = 0, al = 0, xk = 0;
+        for (PtvModel.Channel x : l) { switch (x.country) { case "IT": it++; break; case "CH": ch++; break; case "AL": al++; break; case "XK": xk++; break; default: } }
+        StringBuilder sb = new StringBuilder(Tr.count(l.size(), "channel", "channels"));
+        if (it + ch + al + xk > 0) {
+            sb.append(": ");
+            String[] names = {Tr.t("Italy"), Tr.t("Switzerland"), Tr.t("Albania"), Tr.t("Kosovo")};
+            int[] n = {it, ch, al, xk};
+            boolean first = true;
+            for (int i = 0; i < 4; i++) if (n[i] > 0) { if (!first) sb.append(", "); sb.append(names[i]).append(' ').append(n[i]); first = false; }
+        }
+        return sb.toString();
+    }
+
     static List<PtvModel.Channel> load(Context c) {
         List<PtvModel.Channel> out = new ArrayList<>();
         Set<String> tunerInputs = new HashSet<>();
@@ -47,7 +85,7 @@ final class TunerSource {
                 ch.number = num;
                 ch.tunerInput = input;
                 ch.tunerId = d.getLong(0);
-                ch.country = "";
+                ch.country = AntennaRules.country(name);                        // Italy, Switzerland, Albania, Kosovo by name; "" when not recognised
                 ch.categories.add(String.valueOf(d.getString(5)).contains("AUDIO_VIDEO") ? "tv" : "radio");
                 out.add(ch);
             }

@@ -123,7 +123,7 @@ final class TvPage extends Page implements ChannelGrid.Listener {
         col.addView(stage);
     }
 
-    @Override String hint() { return overlayOpen ? "" : "OK to watch   Hold OK for options   Right for inputs"; }
+    @Override String hint() { return overlayOpen ? "" : Tr.t("OK to watch   Hold OK for options   Right for inputs"); }
 
     @Override void focusFirst() { focusSoon(grid); }
 
@@ -147,7 +147,10 @@ final class TvPage extends Page implements ChannelGrid.Listener {
         PtvUsage usage;
         Set<String> favs;
         String railSig;
+        boolean tuner;
     }
+
+    private boolean hasTuner;
 
     private void reload() {
         lastLoad = SystemClock.uptimeMillis();
@@ -157,6 +160,7 @@ final class TvPage extends Page implements ChannelGrid.Listener {
             s.entries = Inputs.query(ctx);
             s.channels = PtvCatalog.load(ctx);
             s.channels.addAll(TunerSource.load(ctx));
+            s.tuner = TunerSource.hasTuner(ctx);
             PtvCatalog.migrate(ctx, s.channels);
             s.usage = PtvCatalog.usage(ctx);
             s.favs = PtvCatalog.favorites(ctx);
@@ -173,6 +177,7 @@ final class TvPage extends Page implements ChannelGrid.Listener {
     }
 
     private void apply(Snapshot s) {
+        hasTuner = s.tuner;
         channels = s.channels;
         byId.clear();
         for (PtvModel.Channel c : channels) byId.put(c.id, c);
@@ -191,14 +196,25 @@ final class TvPage extends Page implements ChannelGrid.Listener {
         host.hintChanged();
     }
 
+    /** Shows only the antenna channels (the remote button 'Antenna channels'). */
+    void showAntenna() { setFilter(3); }
+
+    /** Plays a channel by its id (a remote button, quick access). False when it is not in the list. */
+    boolean playById(String id) {
+        PtvModel.Channel c = byId.get(id);
+        if (c == null) return false;
+        play(c);
+        return true;
+    }
+
     /** Applies the current filter and sort to the loaded channels. Cheap: art is already cached. */
     private void rebuild() {
         String[] keys = {"XK", "AL", "TUNER", "OTHER"};
-        String[] names = {"Kosovo", "Albania", "Antenna", "Other"};
+        String[] names = {Tr.t("Kosovo"), Tr.t("Albania"), Tr.t("Antenna"), Tr.t("Other")};
         List<ChannelGrid.Section> sections = new ArrayList<>();
         playOrder = new ArrayList<>();
         if (filter == 0) {                                      // inputs that have a picture come first, like the source list on a TV
-            ChannelGrid.Section in = new ChannelGrid.Section("Inputs");
+            ChannelGrid.Section in = new ChannelGrid.Section(Tr.t("Inputs"));
             for (Inputs.Entry e : entries) if (e.hdmi && e.state == android.media.tv.TvInputManager.INPUT_STATE_CONNECTED) in.inputs.add(e);
             if (!in.inputs.isEmpty()) sections.add(in);
         }
@@ -208,6 +224,21 @@ final class TvPage extends Page implements ChannelGrid.Listener {
             List<PtvModel.Channel> in = new ArrayList<>();
             for (PtvModel.Channel c : channels) if (c.section().equals(keys[k]) && (filter != 4 || favorites.contains(c.id))) in.add(c);
             if (in.isEmpty()) continue;
+            if (keys[k].equals("TUNER")) {                                // the antenna's channels are grouped by the country OMNI recognises them as
+                String[] codes = {"IT", "CH", "AL", "XK", ""};
+                String[] cn = {Tr.t("Italy"), Tr.t("Switzerland"), Tr.t("Albania"), Tr.t("Kosovo"), ""};
+                for (int g = 0; g < codes.length; g++) {
+                    List<PtvModel.Channel> part = new ArrayList<>();
+                    for (PtvModel.Channel c : in) if (c.country.equals(codes[g])) part.add(c);
+                    if (part.isEmpty()) continue;
+                    ChannelGrid.Section ts = new ChannelGrid.Section(Tr.t("Antenna") + (cn[g].isEmpty() ? "" : " · " + cn[g]));
+                    ts.channels.addAll(ChannelSort.order(part, sort, usage, favorites));
+                    for (PtvModel.Channel c : ts.channels) if (c.playable()) playOrder.add(c.id);
+                    sections.add(ts);
+                    total += part.size();
+                }
+                continue;
+            }
             ChannelGrid.Section sec = new ChannelGrid.Section(names[k]);
             sec.channels.addAll(ChannelSort.order(in, sort, usage, favorites));
             for (PtvModel.Channel c : sec.channels) if (c.playable()) playOrder.add(c.id);
@@ -215,17 +246,17 @@ final class TvPage extends Page implements ChannelGrid.Listener {
             total += in.size();
         }
         shownTotal = total;
-        grid.setEmptyText(filter == 4 ? "No favorites yet. Hold OK on a channel and choose Add to favorites." : "No channels here.");
+        grid.setEmptyText(filter == 4 ? "No favorites yet. Hold OK on a channel and choose Add to favorites." : filter == 3 && hasTuner ? Tr.t("This TV has a tuner but no channels yet. Scanning is done by the TV itself.") : Tr.t("No channels here."));
         grid.setData(sections, favorites);
         if (sections.isEmpty() == false && grid.currentInput() == null) stopPreview();
         if (!grid.hasFocus()) showDefaultTitle(total);
     }
 
     private void showDefaultTitle(int shownCount) {
-        title.setText(filter == 0 ? "Live TV" : TvToolbar.FILTERS[filter]);
+        title.setText(filter == 0 ? Tr.t("Live TV") : Tr.t(TvToolbar.FILTERS[filter]));
         int playable = 0;
         for (PtvModel.Channel c : channels) if (c.playable()) playable++;
-        meta.setText(shownCount + (shownCount == 1 ? " channel" : " channels") + "   ·   sorted: " + TvToolbar.SORTS[sort]);
+        meta.setText(Tr.count(shownCount, "channel", "channels") + "   ·   " + Tr.t("Sort") + ": " + Tr.t(TvToolbar.SORTS[sort]));
         note.setText(usage.hasHistory() ? "Order and counts reflect viewing on this TV only." : "No viewing history yet, so channels are alphabetical until you watch some.");
     }
 

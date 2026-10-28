@@ -78,9 +78,9 @@ final class Updater {
         } catch (Exception e) { return null; }
     }
 
-    /** A build that bundles its own channel list is a personal build: replacing it with the public release would lose that list and its logos. */
+    /** A build that bundles channel logos is a personal build (logos are third-party trademarks and are not in the public repo): replacing it with the public release would lose them. */
     boolean personalBuild() {
-        try (InputStream in = ctx.getAssets().open("ptv-catalog.json")) { return in.available() > 200; } catch (Exception e) { return false; }
+        try { String[] l = ctx.getAssets().list("logos"); return l != null && l.length > 0; } catch (Exception e) { return false; }
     }
 
     /** The newest release found by the last check, or null. */

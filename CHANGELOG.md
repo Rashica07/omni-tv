@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-rc.12
+* **Simple mode** (no home server): chosen in the first-run setup (the default for new installs) or under Settings > Simple mode. It hides the Server screen and rows and server polling, and the setup skips the server step. Existing installs keep everything.
+* **Languages**: English, Albanian (Shqip), Italian and Swiss Standard German, chosen at first run or under Settings > Language (the TV's own language is used until then). Covers navigation, Home, Live TV, Settings, the setup, quick access and the remote-button screens; translations are machine-written and need native review (`docs/TRANSLATIONS.md`).
+* **All 33 Albanian and Kosovan channels come with the app** (catalogue only, no logos), so Live TV works with no server.
+* **Antenna recognition**: channels the TV's tuner has scanned are grouped by the country OMNI recognises from their names (Italy, Switzerland, Albania, Kosovo). A tuner with no channels yet is offered the TV's own scan (in the setup and via a remote button); OMNI never scans itself.
+* **Quick access**: Settings > Quick access (also in the setup) is a tick-list of apps for the Home row. **Remote buttons** can now open any app, HDMI input or channel (pick the button, then what it opens), or the antenna list.
+* Updates: personal builds are now recognised by their channel logos.
+
 ## 1.0.0-rc.11
 * **Fix: the HDMI picture no longer ends after 10 minutes.** The preview's 10-minute timer kept running after the picture went full screen; when it fired the picture disappeared and the empty viewer left on top of the launcher looked like a crash until Home was pressed. A full-screen picture now has no timer (it ends when you leave), and if the picture window ever goes away the empty viewer closes with it.
 * Roadmap: Tizen, webOS, Titan OS and VIDAA web-app ports, and a no-server "Simple mode".

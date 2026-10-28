@@ -9,8 +9,8 @@ import java.util.Map;
  * Navigation, OK, Back, Home, volume and power can never be remapped: those must always work.
  */
 final class KeyMap {
-    static final String[] ACTIONS = {"control", "assistant", "search", "home", "tv", "cinema", "weather", "settings"};
-    static final String[] ACTION_NAMES = {"Control Center", "Assistant", "Search", "Home", "Live TV", "OMNI Cinema", "Weather", "Settings"};
+    static final String[] ACTIONS = {"control", "assistant", "search", "home", "tv", "antenna", "cinema", "weather", "settings"};
+    static final String[] ACTION_NAMES = {"Control Center", "Assistant", "Search", "Home", "Live TV", "Antenna channels", "OMNI Cinema", "Weather", "Settings"};
     static final String DEFAULTS = "165=control;10358=control;84=assistant;231=assistant;219=assistant";
 
     private final LinkedHashMap<Integer, String> map = new LinkedHashMap<>();
@@ -26,11 +26,11 @@ final class KeyMap {
         }
     }
 
-    static boolean known(String action) { for (String a : ACTIONS) if (a.equals(action)) return true; return action != null && action.startsWith("app:") && action.length() > 4; }
+    static boolean known(String action) { for (String a : ACTIONS) if (a.equals(action)) return true; return action != null && action.length() > 6 && (action.startsWith("app:") || action.startsWith("input:") || action.startsWith("channel:")); }
 
     static String actionName(String action) {
         for (int i = 0; i < ACTIONS.length; i++) if (ACTIONS[i].equals(action)) return ACTION_NAMES[i];
-        return action != null && action.startsWith("app:") ? "Open " + action.substring(4) : "Nothing";
+        return action != null && action.startsWith("app:") ? "Open " + action.substring(4) : action != null && action.startsWith("input:") ? "Open an input" : action != null && action.startsWith("channel:") ? "Watch a channel" : "Nothing";
     }
 
     private void parse(String s) {
